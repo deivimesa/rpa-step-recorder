@@ -27,7 +27,6 @@ htmlcov/
 # --- PyInstaller / empaquetado --------------------------------------------
 # Los binarios NO se versionan: se publican como Release en GitHub.
 build/
-dist/
 desktop/build/
 desktop/dist/
 *.manifest
