@@ -38,16 +38,17 @@ REL_COLORS = {
     "baja": _rgb(dc.RED_HEX),
 }
 
-# Tamaños de fuente (pt) reutilizables.
-FS_TITLE = 26
-FS_SUBTITLE = 12
-FS_H1 = 16
-FS_STEP = 15
-FS_DESC = 13
-FS_SECTION = 10
-FS_BODY = 10
-FS_SMALL = 9
-FS_CAPTION = 8
+# Tamaños de fuente (pt): se usan los tokens unificados de doc_common para que
+# Word y PDF compartan la misma escala. FS_DESC se mapea al "lead" del documento.
+FS_TITLE = dc.FS_TITLE
+FS_SUBTITLE = dc.FS_SUBTITLE
+FS_H1 = dc.FS_H1
+FS_STEP = dc.FS_STEP
+FS_DESC = dc.FS_LEAD
+FS_SECTION = dc.FS_SECTION
+FS_BODY = dc.FS_BODY
+FS_SMALL = dc.FS_SMALL
+FS_CAPTION = dc.FS_CAPTION
 
 # Ancho útil de la página (pulgadas) para que las imágenes no se desborden.
 CONTENT_W_IN = 6.3
@@ -98,8 +99,10 @@ def _section_title(doc, text):
     para = doc.add_paragraph()
     para.paragraph_format.space_before = Pt(10)
     para.paragraph_format.space_after = Pt(2)
+    para.paragraph_format.line_spacing = dc.LH_HEADING
     run = para.add_run(str(text).upper())
     run.bold = True
+    run.font.name = dc.DOC_FONT_HEADING
     run.font.size = Pt(FS_SECTION)
     run.font.color.rgb = ACCENT
     # Regla fina (borde inferior gris claro) para separar la sección.
@@ -155,14 +158,18 @@ def _cover(doc, session):
     title = doc.add_paragraph()
     title.alignment = WD_ALIGN_PARAGRAPH.LEFT
     title.paragraph_format.space_before = Pt(60)
+    title.paragraph_format.line_spacing = dc.LH_TITLE
     run = title.add_run(session.get("name", "Proceso"))
     run.bold = True
+    run.font.name = dc.DOC_FONT_HEADING
     run.font.size = Pt(FS_TITLE)
     run.font.color.rgb = INK
 
     subtitle = doc.add_paragraph()
     subtitle.paragraph_format.space_after = Pt(2)
+    subtitle.paragraph_format.line_spacing = dc.LH_HEADING
     sub_run = subtitle.add_run(dc.DOC_SUBTITLE)
+    sub_run.font.name = dc.DOC_FONT_HEADING
     sub_run.font.size = Pt(FS_SUBTITLE)
     sub_run.font.color.rgb = ACCENT
 
@@ -173,6 +180,7 @@ def _cover(doc, session):
     # Bloque "Resumen de fiabilidad" en la portada.
     _section_title(doc, "Resumen de fiabilidad")
     overview = doc.add_paragraph()
+    overview.paragraph_format.line_spacing = dc.LH_BODY
     ov_run = overview.add_run(dc.reliability_overview(session))
     ov_run.bold = True
     ov_run.font.size = Pt(FS_BODY)
@@ -189,8 +197,10 @@ def _cover(doc, session):
 def _step_index(doc, session):
     """Índice/resumen de pasos como tabla de 3 columnas: # | Descripción | Fiabilidad."""
     heading = doc.add_paragraph()
+    heading.paragraph_format.line_spacing = dc.LH_HEADING
     h_run = heading.add_run("Resumen de pasos")
     h_run.bold = True
+    h_run.font.name = dc.DOC_FONT_HEADING
     h_run.font.size = Pt(FS_H1)
     h_run.font.color.rgb = INK
 
@@ -228,6 +238,9 @@ def _step_header(doc, step):
     table.allow_autofit = False
     left, right = table.rows[0].cells
     _set_cell_text(left, f"Paso {step.get('index', '')}", bold=True, color=ACCENT, size=FS_STEP)
+    # Encabezado del paso con la familia de títulos.
+    for run in left.paragraphs[0].runs:
+        run.font.name = dc.DOC_FONT_HEADING
     left.width = Inches(4.8)
 
     level = dc.step_level(step)
@@ -250,9 +263,10 @@ def _step_body(doc, session, step):
     """Contenido completo de un paso con jerarquía y secciones etiquetadas."""
     _step_header(doc, step)
 
-    # Descripción destacada (tamaño mayor).
+    # Descripción destacada (tamaño mayor, interlineado de "lead").
     desc = doc.add_paragraph()
     desc.paragraph_format.space_before = Pt(4)
+    desc.paragraph_format.line_spacing = dc.LH_LEAD
     desc_run = desc.add_run(dc.step_text(step))
     desc_run.font.size = Pt(FS_DESC)
     desc_run.font.color.rgb = INK
@@ -311,10 +325,18 @@ def _apply_footer(doc, session):
     run.font.color.rgb = MUTED
 
 
+def _configure_base_styles(doc):
+    """Fija la fuente de cuerpo (Calibri) y el tamaño base del estilo Normal."""
+    normal = doc.styles["Normal"]
+    normal.font.name = dc.DOC_FONT
+    normal.font.size = Pt(dc.FS_BODY)
+
+
 def export(session: dict, out_path: str | Path) -> Path:
     out_path = Path(out_path)
     doc = Document()
 
+    _configure_base_styles(doc)
     _apply_footer(doc, session)
 
     # ── portada ──

@@ -20,16 +20,17 @@ from PIL import Image, ImageTk
 
 from . import doc_common as dc
 from . import storage
+from . import ui_theme as ut
 
-# ── Paleta (coherente con main.py y review.py) ──────────────
-ACCENT = "#d62d2d"   # rojo de acento
-INK = "#1a1a1a"      # tinta (texto principal)
-MUTED = "#6b6b6b"    # texto tenue
-BG = "#f7f7f8"       # fondo general
-CARD = "#ffffff"     # fondo de tarjetas
+# ── Paleta y tokens (centralizados en ui_theme) ─────────────
+ACCENT = ut.ACCENT   # rojo de acento
+INK = ut.INK         # tinta (texto principal)
+MUTED = ut.MUTED     # texto tenue
+BG = ut.BG           # fondo general
+CARD = ut.CARD       # fondo de tarjetas
 
 # Colores y etiquetas del badge de fiabilidad según reliability.level.
-REL_COLORS = {"alta": "#2e9e5b", "media": "#e0a106", "baja": "#d62d2d"}
+REL_COLORS = ut.REL_COLORS
 REL_LABELS = {"alta": "Fiabilidad alta", "media": "Fiabilidad media", "baja": "Fiabilidad baja"}
 
 # Anchos máximos de las imágenes (en píxeles).
@@ -74,19 +75,19 @@ class StepDetail(tk.Toplevel):
     def _setup_style(self):
         style = ttk.Style(self)
         style.theme_use("clam")
-        style.configure(".", background=BG, foreground=INK, font=("Segoe UI", 10))
+        style.configure(".", background=BG, foreground=INK, font=ut.FONT_BODY)
         style.configure("TFrame", background=BG)
         style.configure("Card.TFrame", background=CARD)
         style.configure("TLabel", background=BG, foreground=INK)
         style.configure("Card.TLabel", background=CARD, foreground=INK)
-        style.configure("Muted.TLabel", background=BG, foreground=MUTED, font=("Segoe UI", 9))
-        style.configure("CardMuted.TLabel", background=CARD, foreground=MUTED, font=("Segoe UI", 9))
-        style.configure("Title.TLabel", background=BG, foreground=INK, font=("Segoe UI", 15, "bold"))
+        style.configure("Muted.TLabel", background=BG, foreground=MUTED, font=ut.FONT_CAPTION)
+        style.configure("CardMuted.TLabel", background=CARD, foreground=MUTED, font=ut.FONT_CAPTION)
+        style.configure("Title.TLabel", background=BG, foreground=INK, font=ut.FONT_H1)
         style.configure(
-            "Section.TLabel", background=BG, foreground=INK, font=("Segoe UI", 11, "bold")
+            "Section.TLabel", background=BG, foreground=INK, font=ut.FONT_H3
         )
-        style.configure("TButton", padding=6)
-        style.configure("Small.TButton", padding=(6, 2), font=("Segoe UI", 8))
+        style.configure("TButton", padding=ut.SPACE_2)
+        style.configure("Small.TButton", padding=(ut.SPACE_2, ut.SPACE_1 // 2), font=ut.FONT_CAPTION)
 
     # ── utilidades de datos ─────────────────────────────────
 
@@ -112,7 +113,7 @@ class StepDetail(tk.Toplevel):
 
     def _build_missing(self):
         """Mensaje amable cuando el paso ya no existe."""
-        box = ttk.Frame(self, padding=24)
+        box = ttk.Frame(self, padding=ut.SPACE_6)
         box.pack(fill="both", expand=True)
         ttk.Label(
             box,
@@ -123,7 +124,7 @@ class StepDetail(tk.Toplevel):
             box,
             text="Puede que la grabación se haya borrado o modificado.",
             style="Muted.TLabel",
-        ).pack(anchor="w", pady=(6, 16))
+        ).pack(anchor="w", pady=(ut.SPACE_2, ut.SPACE_4))
         ttk.Button(box, text="Cerrar", command=self.destroy).pack(anchor="w")
 
     # ── interfaz: caso normal ───────────────────────────────
@@ -135,7 +136,7 @@ class StepDetail(tk.Toplevel):
 
         self._canvas = tk.Canvas(container, highlightthickness=0, bg=BG)
         scrollbar = ttk.Scrollbar(container, orient="vertical", command=self._canvas.yview)
-        self._body = ttk.Frame(self._canvas, padding=16)
+        self._body = ttk.Frame(self._canvas, padding=ut.SPACE_4)
         self._body.bind(
             "<Configure>", lambda e: self._canvas.configure(scrollregion=self._canvas.bbox("all"))
         )
@@ -162,13 +163,14 @@ class StepDetail(tk.Toplevel):
     def _build_header(self, parent):
         """Cabecera con el nº de paso y la descripción completa."""
         header = ttk.Frame(parent)
-        header.pack(fill="x", pady=(0, 12))
+        header.pack(fill="x", pady=(0, ut.SPACE_3))
         ttk.Label(
             header, text=f"Paso {self.step.get('index')}", style="Title.TLabel"
         ).pack(anchor="w")
         ttk.Label(
-            header, text=dc.step_text(self.step), style="Muted.TLabel", wraplength=820
-        ).pack(anchor="w", pady=(2, 0))
+            header, text=dc.step_text(self.step), font=ut.FONT_BODY_LG,
+            background=BG, foreground=MUTED, wraplength=820
+        ).pack(anchor="w", pady=(ut.SPACE_1, 0))
 
     def _build_images(self, parent):
         """Panel con la captura completa y, si existe, el detalle del elemento."""
@@ -179,38 +181,38 @@ class StepDetail(tk.Toplevel):
             ttk.Label(parent, text="(sin captura)", style="Muted.TLabel").pack(anchor="w", pady=(0, 12))
             return
 
-        card = ttk.Frame(parent, style="Card.TFrame", padding=10)
-        card.pack(fill="x", pady=(0, 14))
+        card = ttk.Frame(parent, style="Card.TFrame", padding=ut.SPACE_3)
+        card.pack(fill="x", pady=(0, ut.SPACE_4))
 
         if full is not None:
             ttk.Label(card, text="Captura completa", style="CardMuted.TLabel").pack(anchor="w")
             full_lbl = tk.Label(
                 card, image=full, cursor="hand2", bg=CARD, borderwidth=1, relief="solid"
             )
-            full_lbl.pack(anchor="w", pady=(4, 0))
+            full_lbl.pack(anchor="w", pady=(ut.SPACE_1, 0))
             full_lbl.bind("<Button-1>", lambda e: self._open_image(self.step.get("full_image", "")))
 
         if zoom is not None:
             ttk.Label(card, text="Detalle del elemento", style="CardMuted.TLabel").pack(
-                anchor="w", pady=(12, 0)
+                anchor="w", pady=(ut.SPACE_3, 0)
             )
             zoom_lbl = tk.Label(
                 card, image=zoom, cursor="hand2", bg=CARD, borderwidth=1, relief="solid"
             )
-            zoom_lbl.pack(anchor="w", pady=(4, 0))
+            zoom_lbl.pack(anchor="w", pady=(ut.SPACE_1, 0))
             zoom_lbl.bind("<Button-1>", lambda e: self._open_image(self.step.get("zoom_image", "")))
 
         ttk.Label(card, text="Clic en una imagen para abrirla", style="CardMuted.TLabel").pack(
-            anchor="w", pady=(8, 0)
+            anchor="w", pady=(ut.SPACE_2, 0)
         )
 
     def _build_description(self, parent):
         """Sección «Descripción» (solo lectura)."""
         self._section_title(parent, "Descripción")
-        card = ttk.Frame(parent, style="Card.TFrame", padding=10)
-        card.pack(fill="x", pady=(0, 14))
+        card = ttk.Frame(parent, style="Card.TFrame", padding=ut.SPACE_3)
+        card.pack(fill="x", pady=(0, ut.SPACE_4))
         tk.Label(
-            card, text=dc.step_text(self.step), bg=CARD, fg=INK, font=("Segoe UI", 10),
+            card, text=dc.step_text(self.step), bg=CARD, fg=INK, font=ut.FONT_BODY_LG,
             anchor="w", justify="left", wraplength=820,
         ).pack(anchor="w", fill="x")
 
@@ -225,44 +227,44 @@ class StepDetail(tk.Toplevel):
             return
 
         self._section_title(parent, "Fiabilidad")
-        card = ttk.Frame(parent, style="Card.TFrame", padding=10)
-        card.pack(fill="x", pady=(0, 14))
+        card = ttk.Frame(parent, style="Card.TFrame", padding=ut.SPACE_3)
+        card.pack(fill="x", pady=(0, ut.SPACE_4))
 
         if level:
             tk.Label(
                 card, text=f" {REL_LABELS.get(level, level)} ", bg=REL_COLORS.get(level, MUTED),
-                fg="#ffffff", font=("Segoe UI", 9, "bold"), padx=8, pady=3,
+                fg="#ffffff", font=ut.FONT_CAPTION_STRONG, padx=ut.SPACE_2, pady=ut.SPACE_1 - 1,
             ).pack(anchor="w")
 
         if summary:
             tk.Label(
-                card, text=summary, bg=CARD, fg=INK, font=("Segoe UI", 10),
+                card, text=summary, bg=CARD, fg=INK, font=ut.FONT_BODY,
                 anchor="w", justify="left", wraplength=820,
-            ).pack(anchor="w", pady=(8, 0))
+            ).pack(anchor="w", pady=(ut.SPACE_2, 0))
 
         # Lista de motivos (si los hay) en viñetas.
         for reason in reasons:
             tk.Label(
-                card, text=f"•  {reason}", bg=CARD, fg=MUTED, font=("Segoe UI", 9),
+                card, text=f"•  {reason}", bg=CARD, fg=MUTED, font=ut.FONT_CAPTION,
                 anchor="w", justify="left", wraplength=800,
-            ).pack(anchor="w", pady=(2, 0))
+            ).pack(anchor="w", pady=(ut.SPACE_1 // 2, 0))
 
     def _build_rows_section(self, parent, title: str, rows: list):
         """Sección genérica de filas clave/valor (metadatos, coordenadas)."""
         if not rows:
             return
         self._section_title(parent, title)
-        card = ttk.Frame(parent, style="Card.TFrame", padding=10)
-        card.pack(fill="x", pady=(0, 14))
+        card = ttk.Frame(parent, style="Card.TFrame", padding=ut.SPACE_3)
+        card.pack(fill="x", pady=(0, ut.SPACE_4))
         for key, value in rows:
             line = ttk.Frame(card, style="Card.TFrame")
-            line.pack(fill="x", pady=2)
+            line.pack(fill="x", pady=ut.SPACE_1 // 2)
             tk.Label(
-                line, text=key, bg=CARD, fg=MUTED, font=("Segoe UI", 9, "bold"),
+                line, text=key, bg=CARD, fg=MUTED, font=ut.FONT_SMALL_STRONG,
                 width=22, anchor="nw", justify="left",
             ).pack(side="left", anchor="n")
             tk.Label(
-                line, text=str(value), bg=CARD, fg=INK, font=("Segoe UI", 10),
+                line, text=str(value), bg=CARD, fg=INK, font=ut.FONT_BODY,
                 anchor="w", justify="left", wraplength=560,
             ).pack(side="left", fill="x", expand=True)
 
@@ -272,16 +274,16 @@ class StepDetail(tk.Toplevel):
         if not rows:
             return
         self._section_title(parent, "Selectores para RPA")
-        card = ttk.Frame(parent, style="Card.TFrame", padding=10)
-        card.pack(fill="x", pady=(0, 14))
+        card = ttk.Frame(parent, style="Card.TFrame", padding=ut.SPACE_3)
+        card.pack(fill="x", pady=(0, ut.SPACE_4))
         for key, value in rows:
             block = ttk.Frame(card, style="Card.TFrame")
-            block.pack(fill="x", pady=(0, 8))
+            block.pack(fill="x", pady=(0, ut.SPACE_2))
 
             head = ttk.Frame(block, style="Card.TFrame")
             head.pack(fill="x")
             tk.Label(
-                head, text=key, bg=CARD, fg=MUTED, font=("Segoe UI", 9, "bold"), anchor="w"
+                head, text=key, bg=CARD, fg=MUTED, font=ut.FONT_SMALL_STRONG, anchor="w"
             ).pack(side="left")
             ttk.Button(
                 head, text="Copiar", style="Small.TButton",
@@ -289,16 +291,16 @@ class StepDetail(tk.Toplevel):
             ).pack(side="right")
 
             tk.Label(
-                block, text=str(value), bg="#fbfbfc", fg=INK, font=("Consolas", 9),
-                anchor="w", justify="left", wraplength=800, padx=6, pady=4,
+                block, text=str(value), bg=ut.FIELD, fg=INK, font=ut.mono_body(),
+                anchor="w", justify="left", wraplength=800, padx=ut.SPACE_2, pady=ut.SPACE_1,
                 borderwidth=1, relief="solid",
-            ).pack(fill="x", pady=(4, 0))
+            ).pack(fill="x", pady=(ut.SPACE_1, 0))
 
     # ── helpers de interfaz ─────────────────────────────────
 
     def _section_title(self, parent, text: str):
         """Subtítulo de sección con un pequeño espacio superior."""
-        ttk.Label(parent, text=text, style="Section.TLabel").pack(anchor="w", pady=(0, 6))
+        ttk.Label(parent, text=text, style="Section.TLabel").pack(anchor="w", pady=(0, ut.SPACE_2))
 
     # ── imágenes y portapapeles ─────────────────────────────
 

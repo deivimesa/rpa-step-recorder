@@ -15,6 +15,20 @@ INK_HEX = "1A1A1A"
 MUTED_HEX = "6B6B6B"
 RULE_HEX = "DDDDDD"
 
+# ── Tipografía del documento (unificada Word + PDF) ─────────
+# Familias de documento.
+DOC_FONT = "Calibri"            # cuerpo en Word
+DOC_FONT_HEADING = "Segoe UI"   # encabezados en Word
+PDF_FONT = "DejaVu"             # fuente Unicode incrustada en el PDF
+PDF_FONT_MONO = "DejaVuMono"    # monoespaciada Unicode del PDF
+
+# Escala del documento (pt) — compartida Word/PDF.
+FS_TITLE, FS_H1, FS_STEP, FS_SUBTITLE = 26, 16, 15, 13
+FS_LEAD, FS_SECTION, FS_BODY, FS_SMALL, FS_CAPTION = 12, 10, 10, 9, 8
+
+# Interlineado (factor) por rol tipográfico.
+LH_TITLE, LH_HEADING, LH_LEAD, LH_BODY = 1.1, 1.25, 1.35, 1.4
+
 # Colores de los niveles de fiabilidad (compartidos por Word y PDF).
 GREEN_HEX = "1F8A3B"
 AMBER_HEX = "B87A00"

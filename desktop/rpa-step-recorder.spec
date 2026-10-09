@@ -29,6 +29,11 @@ datas = []
 binaries = []
 hiddenimports = []
 
+# Fuentes DejaVu (Unicode) usadas por el exportador PDF. Se incrustan como
+# datos para que el .exe las lleve consigo. En onefile se extraen a
+# sys._MEIPASS/app/assets/fonts, ruta que pdf._resolve_fonts_dir() comprueba.
+datas += [('app/assets/fonts/*.ttf', 'app/assets/fonts')]
+
 # Paquetes con submódulos/datos dinámicos: traer todo para evitar sorpresas.
 for _pkg in ('uiautomation', 'comtypes', 'pynput', 'mss', 'fpdf'):
     _d, _b, _h = collect_all(_pkg)

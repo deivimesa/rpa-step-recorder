@@ -19,18 +19,19 @@ from PIL import Image, ImageTk
 from . import doc_common as dc
 from . import inspector
 from . import storage
+from . import ui_theme as ut
 from .exporters import pdf as pdf_exporter
 from .exporters import word as word_exporter
 
-# ── Paleta (coherente con el panel principal) ───────────────
-ACCENT = "#d62d2d"
-INK = "#1a1a1a"
-MUTED = "#6b6b6b"
-BG = "#f7f7f8"
-CARD = "#ffffff"
+# ── Paleta y tokens (centralizados en ui_theme) ─────────────
+ACCENT = ut.ACCENT
+INK = ut.INK
+MUTED = ut.MUTED
+BG = ut.BG
+CARD = ut.CARD
 
 # Colores y etiquetas del badge de fiabilidad.
-REL_COLORS = {"alta": "#2e9e5b", "media": "#e0a106", "baja": "#d62d2d"}
+REL_COLORS = ut.REL_COLORS
 REL_LABELS = {"alta": "Fiabilidad alta", "media": "Fiabilidad media", "baja": "Fiabilidad baja"}
 
 
@@ -71,37 +72,37 @@ class ReviewWindow(tk.Toplevel):
     def _setup_style(self):
         style = ttk.Style(self)
         style.theme_use("clam")
-        style.configure(".", background=BG, foreground=INK, font=("Segoe UI", 10))
+        style.configure(".", background=BG, foreground=INK, font=ut.FONT_BODY)
         style.configure("TFrame", background=BG)
         style.configure("TLabel", background=BG, foreground=INK)
-        style.configure("Muted.TLabel", background=BG, foreground=MUTED, font=("Segoe UI", 9))
+        style.configure("Muted.TLabel", background=BG, foreground=MUTED, font=ut.FONT_CAPTION)
         style.configure("TLabelframe", background=BG, foreground=INK)
-        style.configure("TLabelframe.Label", background=BG, foreground=INK, font=("Segoe UI", 10, "bold"))
-        style.configure("TButton", padding=6)
+        style.configure("TLabelframe.Label", background=BG, foreground=INK, font=ut.FONT_SMALL_STRONG)
+        style.configure("TButton", padding=ut.SPACE_2)
         style.configure(
             "Accent.TButton", background=ACCENT, foreground="#ffffff",
-            font=("Segoe UI", 10, "bold"), padding=8, borderwidth=0,
+            font=ut.FONT_SMALL_STRONG, padding=ut.SPACE_2, borderwidth=0,
         )
-        style.map("Accent.TButton", background=[("active", "#b92525")])
+        style.map("Accent.TButton", background=[("active", ut.ACCENT_ACTIVE)])
 
     # ── interfaz ────────────────────────────────────────────
 
     def _build(self):
         # Barra superior: nombre, resumen de fiabilidad y exportación.
-        toolbar = ttk.Frame(self, padding=12)
+        toolbar = ttk.Frame(self, padding=ut.SPACE_3)
         toolbar.pack(fill="x")
         title_box = ttk.Frame(toolbar)
         title_box.pack(side="left", fill="x", expand=True)
         ttk.Label(
-            title_box, text=self.session.get("name", ""), font=("Segoe UI", 15, "bold")
+            title_box, text=self.session.get("name", ""), font=ut.FONT_H1
         ).pack(anchor="w")
         self._summary = ttk.Label(title_box, text=self._reliability_summary(), style="Muted.TLabel")
-        self._summary.pack(anchor="w", pady=(2, 0))
+        self._summary.pack(anchor="w", pady=(ut.SPACE_1, 0))
 
         ttk.Button(toolbar, text="Exportar Word", style="Accent.TButton",
-                   command=lambda: self._export("word")).pack(side="right", padx=4)
+                   command=lambda: self._export("word")).pack(side="right", padx=ut.SPACE_1)
         ttk.Button(toolbar, text="Exportar PDF", style="Accent.TButton",
-                   command=lambda: self._export("pdf")).pack(side="right", padx=4)
+                   command=lambda: self._export("pdf")).pack(side="right", padx=ut.SPACE_1)
 
         # Lista de pasos con scroll.
         container = ttk.Frame(self)
@@ -150,18 +151,18 @@ class ReviewWindow(tk.Toplevel):
             self._render_card(step)
 
     def _render_card(self, step):
-        frame = ttk.LabelFrame(self._list, text=f"Paso {step.get('index')}", padding=10)
-        frame.pack(fill="x", padx=12, pady=8)
+        frame = ttk.LabelFrame(self._list, text=f"Paso {step.get('index')}", padding=ut.SPACE_3)
+        frame.pack(fill="x", padx=ut.SPACE_3, pady=ut.SPACE_2)
 
         # Columna izquierda: miniatura clickable.
         left = ttk.Frame(frame)
-        left.pack(side="left", anchor="n", padx=(0, 12))
+        left.pack(side="left", anchor="n", padx=(0, ut.SPACE_3))
         thumb = self._load_thumb(step.get("full_image", ""), 220)
         if thumb is not None:
             img_lbl = tk.Label(left, image=thumb, cursor="hand2", bg=CARD, borderwidth=1, relief="solid")
             img_lbl.pack()
             img_lbl.bind("<Button-1>", lambda e, s=step: self._open_image(s))
-            ttk.Label(left, text="Clic para ampliar", style="Muted.TLabel").pack(pady=(2, 0))
+            ttk.Label(left, text="Clic para ampliar", style="Muted.TLabel").pack(pady=(ut.SPACE_1, 0))
         else:
             ttk.Label(left, text="(sin imagen)", style="Muted.TLabel").pack()
 
@@ -177,17 +178,18 @@ class ReviewWindow(tk.Toplevel):
             badge_row.pack(fill="x", anchor="w")
             tk.Label(
                 badge_row, text=f" {REL_LABELS.get(level, level)} ", bg=REL_COLORS.get(level, MUTED),
-                fg="#ffffff", font=("Segoe UI", 8, "bold"), padx=6, pady=2,
+                fg="#ffffff", font=ut.FONT_CAPTION_STRONG, padx=ut.SPACE_2, pady=ut.SPACE_1 // 2,
             ).pack(side="left")
             reasons = rel.get("reasons") or []
             if level in ("media", "baja") and reasons:
-                ttk.Label(badge_row, text=reasons[0], style="Muted.TLabel").pack(side="left", padx=(8, 0))
+                ttk.Label(badge_row, text=reasons[0], style="Muted.TLabel").pack(side="left", padx=(ut.SPACE_2, 0))
 
-        # Editor de descripción (2-3 líneas).
-        editor = tk.Text(right, height=3, wrap="word", font=("Segoe UI", 10),
-                         relief="solid", borderwidth=1)
+        # Editor de descripción (2-3 líneas). spacing para dar aire al texto.
+        editor = tk.Text(right, height=3, wrap="word", font=ut.FONT_BODY,
+                         relief="solid", borderwidth=1,
+                         spacing1=2, spacing3=ut.LH_BODY - 11)
         editor.insert("1.0", dc.step_text(step))
-        editor.pack(fill="x", pady=(6, 0))
+        editor.pack(fill="x", pady=(ut.SPACE_2, 0))
         self._editors[step["id"]] = editor
 
         # Línea meta: app · window · control_label (sin element, p.ej. notas,
@@ -195,17 +197,17 @@ class ReviewWindow(tk.Toplevel):
         control = dc.control_label(step.get("element")) if step.get("element") else ""
         meta = " · ".join(filter(None, [step.get("app"), step.get("window"), control]))
         if meta:
-            ttk.Label(right, text=meta, style="Muted.TLabel").pack(anchor="w", pady=(4, 0))
+            ttk.Label(right, text=meta, style="Muted.TLabel").pack(anchor="w", pady=(ut.SPACE_1, 0))
 
         # Bloque de selectores RPA.
         self._render_selectors(right, step)
 
         # Botones por paso: reordenar y borrar.
         buttons = ttk.Frame(right)
-        buttons.pack(fill="x", pady=(8, 0))
+        buttons.pack(fill="x", pady=(ut.SPACE_2, 0))
         ttk.Button(buttons, text="↑ Subir", width=9, command=lambda s=step: self._move(s, -1)).pack(side="left")
         ttk.Button(buttons, text="↓ Bajar", width=9, command=lambda s=step: self._move(s, +1)).pack(
-            side="left", padx=(4, 0)
+            side="left", padx=(ut.SPACE_1, 0)
         )
         ttk.Button(buttons, text="Borrar", command=lambda s=step: self._delete(s)).pack(side="right")
 
@@ -214,21 +216,21 @@ class ReviewWindow(tk.Toplevel):
         rows = dc.selector_rows(step)
         if not rows:
             return
-        box = ttk.LabelFrame(parent, text="Selectores RPA", padding=8)
-        box.pack(fill="x", pady=(8, 0))
+        box = ttk.LabelFrame(parent, text="Selectores RPA", padding=ut.SPACE_2)
+        box.pack(fill="x", pady=(ut.SPACE_2, 0))
         for key, value in rows:
             line = ttk.Frame(box)
             line.pack(fill="x", pady=1)
             ttk.Label(line, text=key, width=18, style="Muted.TLabel").pack(side="left", anchor="n")
             tk.Label(
-                line, text=value, bg=BG, fg=INK, font=("Consolas", 8), anchor="w",
+                line, text=value, bg=BG, fg=INK, font=ut.mono_small(), anchor="w",
                 justify="left", wraplength=460,
             ).pack(side="left", fill="x", expand=True)
 
         xpath = (step.get("selectors") or {}).get("uia_xpath", "")
         if xpath:
             ttk.Button(box, text="Copiar XPath", command=lambda x=xpath: self._copy(x)).pack(
-                anchor="e", pady=(6, 0)
+                anchor="e", pady=(ut.SPACE_2, 0)
             )
 
     # ── carga de imágenes ───────────────────────────────────

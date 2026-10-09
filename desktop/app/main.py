@@ -20,19 +20,20 @@ from PIL import Image, ImageTk
 from . import doc_common as dc
 from . import storage
 from . import inspector
+from . import ui_theme as ut
 from .recorder import Recorder
 from .review import ReviewWindow
 from .step_detail import StepDetail
 
-# ── Paleta de la aplicación ─────────────────────────────────
-ACCENT = "#d62d2d"   # rojo de acento
-INK = "#1a1a1a"      # tinta (texto principal)
-MUTED = "#6b6b6b"    # texto tenue
-BG = "#f7f7f8"       # fondo general
-CARD = "#ffffff"     # fondo de tarjetas
+# ── Paleta y tokens tipográficos (centralizados en ui_theme) ─
+ACCENT = ut.ACCENT       # rojo de acento
+INK = ut.INK             # tinta (texto principal)
+MUTED = ut.MUTED         # texto tenue
+BG = ut.BG               # fondo general
+CARD = ut.CARD           # fondo de tarjetas
 
 # Color del punto de fiabilidad según reliability.level.
-REL_COLORS = {"alta": "#2e9e5b", "media": "#e0a106", "baja": "#d62d2d"}
+REL_COLORS = ut.REL_COLORS
 
 
 def _format_size(num_bytes: int) -> str:
@@ -46,6 +47,8 @@ def _format_size(num_bytes: int) -> str:
 class App(tk.Tk):
     def __init__(self):
         super().__init__()
+        # Ya hay raíz Tk: resolvemos la monoespaciada preferida (Cascadia/Consolas).
+        ut.resolve_mono()
         self.title("RPA Step Recorder")
         # Registramos el título propio para que el grabador no se capture a sí
         # mismo (respaldo de inspector.es_ventana_propia).
@@ -76,53 +79,56 @@ class App(tk.Tk):
     def _setup_style(self):
         style = ttk.Style(self)
         style.theme_use("clam")
-        style.configure(".", background=BG, foreground=INK, font=("Segoe UI", 10))
+        style.configure(".", background=BG, foreground=INK, font=ut.FONT_BODY)
         style.configure("TFrame", background=BG)
         style.configure("TLabel", background=BG, foreground=INK)
-        style.configure("Muted.TLabel", background=BG, foreground=MUTED, font=("Segoe UI", 9))
+        style.configure("Muted.TLabel", background=BG, foreground=MUTED, font=ut.FONT_CAPTION)
         style.configure("TLabelframe", background=BG, foreground=INK)
-        style.configure("TLabelframe.Label", background=BG, foreground=MUTED, font=("Segoe UI", 9, "bold"))
-        style.configure("TEntry", fieldbackground=CARD, padding=4)
-        style.configure("TButton", padding=6)
+        style.configure("TLabelframe.Label", background=BG, foreground=MUTED, font=ut.FONT_CAPTION_STRONG)
+        style.configure("TEntry", fieldbackground=CARD, padding=ut.SPACE_1)
+        style.configure("TButton", padding=ut.SPACE_2)
         # Botón grande de acento para "Iniciar grabación".
         style.configure(
             "Accent.TButton",
             background=ACCENT,
             foreground="#ffffff",
-            font=("Segoe UI", 11, "bold"),
-            padding=12,
+            font=ut.FONT_BODY_STRONG,
+            padding=ut.SPACE_3,
             borderwidth=0,
         )
-        style.map("Accent.TButton", background=[("active", "#b92525"), ("disabled", "#e3a3a3")])
+        style.map(
+            "Accent.TButton",
+            background=[("active", ut.ACCENT_ACTIVE), ("disabled", ut.ACCENT_DISABLED)],
+        )
         # Tarjetas de la lista en vivo.
         style.configure("Card.TFrame", background=CARD, relief="solid", borderwidth=1)
         style.configure("Card.TLabel", background=CARD, foreground=INK)
-        style.configure("CardMuted.TLabel", background=CARD, foreground=MUTED, font=("Segoe UI", 8))
+        style.configure("CardMuted.TLabel", background=CARD, foreground=MUTED, font=ut.FONT_CAPTION)
         # Botones pequeños de la barra de acciones de cada tarjeta.
-        style.configure("CardAction.TButton", padding=(6, 2), font=("Segoe UI", 8))
+        style.configure("CardAction.TButton", padding=(ut.SPACE_2, ut.SPACE_1 // 2), font=ut.FONT_CAPTION)
 
     # ── interfaz ────────────────────────────────────────────
 
     def _build(self):
         # Cabecera con el nombre de la app y el "pill" de estado.
-        header = ttk.Frame(self, padding=(16, 14))
+        header = ttk.Frame(self, padding=(ut.SPACE_4, ut.SPACE_3))
         header.pack(fill="x")
-        tk.Label(header, text="●", fg=ACCENT, bg=BG, font=("Segoe UI", 12)).pack(side="left")
+        tk.Label(header, text="●", fg=ACCENT, bg=BG, font=ut.FONT_NUMERIC).pack(side="left")
         tk.Label(
-            header, text="RPA Step Recorder", bg=BG, fg=INK, font=("Segoe UI", 13, "bold")
-        ).pack(side="left", padx=6)
-        self._pill = tk.Label(header, text="Listo", font=("Segoe UI", 9, "bold"), padx=10, pady=3)
+            header, text="RPA Step Recorder", bg=BG, fg=INK, font=ut.FONT_H3
+        ).pack(side="left", padx=ut.SPACE_2)
+        self._pill = tk.Label(header, text="Listo", font=ut.FONT_CAPTION_STRONG, padx=ut.SPACE_2, pady=ut.SPACE_1 - 1)
         self._pill.pack(side="right")
 
-        body = ttk.Frame(self, padding=16)
+        body = ttk.Frame(self, padding=ut.SPACE_4)
         body.pack(fill="both", expand=True)
 
         self._build_idle(body)
         self._build_live(body)
 
         # Mensaje de estado al pie.
-        self._msg = tk.Label(self, text="", bg=BG, fg=MUTED, font=("Segoe UI", 9), anchor="w", padx=16)
-        self._msg.pack(fill="x", pady=(0, 8))
+        self._msg = tk.Label(self, text="", bg=BG, fg=MUTED, font=ut.FONT_CAPTION, anchor="w", padx=ut.SPACE_4)
+        self._msg.pack(fill="x", pady=(0, ut.SPACE_2))
 
         self._tick()
 
@@ -134,25 +140,25 @@ class App(tk.Tk):
         self._form.pack(fill="x")
         ttk.Label(self._form, text="Nombre del proceso").pack(anchor="w")
         self._name = ttk.Entry(self._form)
-        self._name.pack(fill="x", pady=(2, 10))
+        self._name.pack(fill="x", pady=(ut.SPACE_1, ut.SPACE_3))
         ttk.Label(self._form, text="Autor").pack(anchor="w")
         self._author = ttk.Entry(self._form)
-        self._author.pack(fill="x", pady=(2, 10))
+        self._author.pack(fill="x", pady=(ut.SPACE_1, ut.SPACE_3))
         ttk.Label(self._form, text="Sistema o aplicación").pack(anchor="w")
         self._system = ttk.Entry(self._form)
-        self._system.pack(fill="x", pady=(2, 12))
+        self._system.pack(fill="x", pady=(ut.SPACE_1, ut.SPACE_3))
 
         self._start_btn = ttk.Button(
             self._idle, text="Iniciar grabación", style="Accent.TButton", command=self._start
         )
-        self._start_btn.pack(fill="x", pady=(0, 10))
+        self._start_btn.pack(fill="x", pady=(0, ut.SPACE_3))
 
         # Lista de grabaciones recientes.
-        self._recent = ttk.LabelFrame(self._idle, text="Grabaciones", padding=8)
+        self._recent = ttk.LabelFrame(self._idle, text="Grabaciones", padding=ut.SPACE_2)
         self._recent.pack(fill="both", expand=True)
 
         self._usage = ttk.Label(self._idle, text="", style="Muted.TLabel")
-        self._usage.pack(anchor="w", pady=(8, 0))
+        self._usage.pack(anchor="w", pady=(ut.SPACE_2, 0))
 
     def _build_live(self, parent):
         """Zona visible mientras se graba: contador, cronómetro y pasos en vivo."""
@@ -160,34 +166,34 @@ class App(tk.Tk):
 
         counter = ttk.Frame(self._live)
         counter.pack(fill="x")
-        self._count = tk.Label(counter, text="0", bg=BG, fg=ACCENT, font=("Segoe UI", 34, "bold"))
+        self._count = tk.Label(counter, text="0", bg=BG, fg=ACCENT, font=ut.FONT_DISPLAY)
         self._count.pack(side="left")
         count_box = ttk.Frame(counter)
-        count_box.pack(side="left", padx=(10, 0), anchor="s", pady=(0, 8))
-        self._count_label = tk.Label(count_box, text="pasos", bg=BG, fg=MUTED, font=("Segoe UI", 10))
+        count_box.pack(side="left", padx=(ut.SPACE_3, 0), anchor="s", pady=(0, ut.SPACE_2))
+        self._count_label = tk.Label(count_box, text="pasos", bg=BG, fg=MUTED, font=ut.FONT_SMALL)
         self._count_label.pack(anchor="w")
-        self._timer = tk.Label(counter, text="00:00", bg=BG, fg=INK, font=("Segoe UI", 16))
-        self._timer.pack(side="right", anchor="s", pady=(0, 10))
+        self._timer = tk.Label(counter, text="00:00", bg=BG, fg=INK, font=ut.FONT_NUMERIC)
+        self._timer.pack(side="right", anchor="s", pady=(0, ut.SPACE_3))
 
         # Botones de control de la grabación.
         actions = ttk.Frame(self._live)
-        actions.pack(fill="x", pady=(6, 10))
+        actions.pack(fill="x", pady=(ut.SPACE_2, ut.SPACE_3))
         self._pause_btn = ttk.Button(actions, text="Pausar", command=self._toggle_pause)
-        self._pause_btn.pack(side="left", expand=True, fill="x", padx=2)
+        self._pause_btn.pack(side="left", expand=True, fill="x", padx=ut.SPACE_1 // 2)
         self._note_btn = ttk.Button(actions, text="Agregar nota", command=self._add_note)
-        self._note_btn.pack(side="left", expand=True, fill="x", padx=2)
+        self._note_btn.pack(side="left", expand=True, fill="x", padx=ut.SPACE_1 // 2)
         self._undo_btn = ttk.Button(actions, text="Deshacer último", command=self._undo_last)
-        self._undo_btn.pack(side="left", expand=True, fill="x", padx=2)
+        self._undo_btn.pack(side="left", expand=True, fill="x", padx=ut.SPACE_1 // 2)
         self._stop_btn = ttk.Button(
             actions, text="Detener y revisar", style="Accent.TButton", command=self._stop
         )
-        self._stop_btn.pack(side="left", expand=True, fill="x", padx=2)
+        self._stop_btn.pack(side="left", expand=True, fill="x", padx=ut.SPACE_1 // 2)
 
         ttk.Label(self._live, text="Pasos grabados", style="Muted.TLabel").pack(anchor="w")
 
         # Lista de pasos en vivo con scroll (Canvas + Frame interior).
         wrap = ttk.Frame(self._live)
-        wrap.pack(fill="both", expand=True, pady=(4, 0))
+        wrap.pack(fill="both", expand=True, pady=(ut.SPACE_1, 0))
         self._live_canvas = tk.Canvas(wrap, highlightthickness=0, bg=BG)
         scrollbar = ttk.Scrollbar(wrap, orient="vertical", command=self._live_canvas.yview)
         self._live_inner = ttk.Frame(self._live_canvas)
@@ -392,8 +398,8 @@ class App(tk.Tk):
         """
         step_id = step.get("id")
 
-        row = ttk.Frame(self._live_inner, style="Card.TFrame", padding=10)
-        row.pack(fill="x", padx=4, pady=5)
+        row = ttk.Frame(self._live_inner, style="Card.TFrame", padding=ut.SPACE_3)
+        row.pack(fill="x", padx=ut.SPACE_1, pady=ut.SPACE_1 + 1)
 
         # ── Fila 1: nº (badge), miniatura y fiabilidad ──────────
         head = ttk.Frame(row, style="Card.TFrame")
@@ -401,16 +407,16 @@ class App(tk.Tk):
 
         # Badge tenue con el número de paso.
         tk.Label(
-            head, text=str(step.get("index")), bg="#eef0f2", fg=MUTED,
-            font=("Segoe UI", 10, "bold"), width=3, padx=4, pady=2,
-        ).pack(side="left", padx=(0, 8))
+            head, text=str(step.get("index")), bg=ut.BADGE_BG, fg=MUTED,
+            font=ut.FONT_SMALL_STRONG, width=3, padx=ut.SPACE_1, pady=ut.SPACE_1 // 2,
+        ).pack(side="left", padx=(0, ut.SPACE_2))
 
         # Miniatura pequeña (~56px).
         thumb = self._load_thumb(session_id, step.get("full_image", ""), 56)
         if thumb is not None:
             tk.Label(
                 head, image=thumb, bg=CARD, borderwidth=1, relief="solid"
-            ).pack(side="left", padx=(0, 8))
+            ).pack(side="left", padx=(0, ut.SPACE_2))
 
         # Etiqueta de fiabilidad con color (a la derecha).
         level = (step.get("reliability") or {}).get("level", "")
@@ -419,11 +425,11 @@ class App(tk.Tk):
         rel_box = ttk.Frame(head, style="Card.TFrame")
         rel_box.pack(side="right")
         tk.Label(
-            rel_box, text="●", bg=CARD, fg=rel_color, font=("Segoe UI", 11)
+            rel_box, text="●", bg=CARD, fg=rel_color, font=ut.FONT_BODY
         ).pack(side="left")
         tk.Label(
-            rel_box, text=rel_text, bg=CARD, fg=rel_color, font=("Segoe UI", 8, "bold")
-        ).pack(side="left", padx=(3, 0))
+            rel_box, text=rel_text, bg=CARD, fg=rel_color, font=ut.FONT_CAPTION_STRONG
+        ).pack(side="left", padx=(ut.SPACE_1 - 1, 0))
 
         # ── Fila 2: descripción editable inline ─────────────────
         # Entry con estilo suave (sin borde agresivo, fondo casi blanco y algo
@@ -431,12 +437,12 @@ class App(tk.Tk):
         # recorder.update_step_description. Se conserva la lógica de
         # _editing_step_id / _active_editor / _flush_active_editor.
         editor = tk.Entry(
-            row, bg="#fcfcfd", fg=INK, font=("Segoe UI", 10),
-            relief="flat", highlightthickness=1, highlightbackground="#e3e4e8",
+            row, bg=ut.CARD_SOFT, fg=INK, font=ut.FONT_BODY,
+            relief="flat", highlightthickness=1, highlightbackground=ut.BORDER,
             highlightcolor="#c9cace",
         )
         editor.insert(0, dc.step_text(step))
-        editor.pack(fill="x", pady=(8, 0), ipady=4)
+        editor.pack(fill="x", pady=(ut.SPACE_2, 0), ipady=ut.SPACE_1)
 
         def _on_focus_in(_event, sid=step_id, widget=editor):
             # Marca el paso en edición para que _refresh no repinte la lista y
@@ -464,7 +470,7 @@ class App(tk.Tk):
 
         # ── Fila 3: barra de acciones discreta (alineada a la derecha) ──
         actions = ttk.Frame(row, style="Card.TFrame")
-        actions.pack(fill="x", pady=(8, 0))
+        actions.pack(fill="x", pady=(ut.SPACE_2, 0))
 
         ttk.Button(
             actions, text="Ver detalle", style="CardAction.TButton",
@@ -482,7 +488,7 @@ class App(tk.Tk):
             actions, text="↓", width=3, style="CardAction.TButton",
             command=lambda sid=step_id: self.recorder.move_step(sid, 1),
         )
-        down_btn.pack(side="right", padx=(0, 4))
+        down_btn.pack(side="right", padx=(0, ut.SPACE_1))
         if pos == total - 1:
             down_btn.state(["disabled"])
 
@@ -490,7 +496,7 @@ class App(tk.Tk):
             actions, text="↑", width=3, style="CardAction.TButton",
             command=lambda sid=step_id: self.recorder.move_step(sid, -1),
         )
-        up_btn.pack(side="right", padx=(0, 4))
+        up_btn.pack(side="right", padx=(0, ut.SPACE_1))
         if pos == 0:
             up_btn.state(["disabled"])
 
