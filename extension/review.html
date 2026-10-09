@@ -1,0 +1,112 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Revisar y exportar · RPA Step Recorder</title>
+    <link rel="stylesheet" href="review.css" />
+  </head>
+  <body>
+    <svg width="0" height="0" style="position:absolute" aria-hidden="true">
+      <defs>
+        <g id="i-doc"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5"/></g>
+        <g id="i-up"><path d="m6 15 6-6 6 6"/></g>
+        <g id="i-down"><path d="m6 9 6 6 6-6"/></g>
+        <g id="i-trash"><path d="M4 7h16"/><path d="M9 7V5a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/><path d="M6 7l1 12a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2l1-12"/></g>
+        <g id="i-check"><path d="m4 12 5 5L20 6"/></g>
+        <g id="i-alert"><path d="M12 9v4"/><path d="M12 17h.01"/><circle cx="12" cy="12" r="9"/></g>
+        <g id="i-back"><path d="M19 12H5"/><path d="m11 18-6-6 6-6"/></g>
+      </defs>
+    </svg>
+
+    <header class="bar">
+      <div class="bar-in">
+        <div class="titles">
+          <input id="title" class="title-input" aria-label="Nombre del proceso" />
+          <div class="sub">
+            <span id="meta"></span>
+            <button class="link" id="edit-cover" type="button">Datos de la portada</button>
+          </div>
+        </div>
+        <div class="bar-actions">
+          <button class="ghost danger" id="delete" title="Eliminar esta grabación y sus capturas">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><use href="#i-trash"/></svg>
+          </button>
+          <button class="ghost" id="export-docx">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><use href="#i-doc"/></svg> Word
+          </button>
+          <button class="primary" id="export-pdf">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><use href="#i-doc"/></svg> PDF
+          </button>
+        </div>
+      </div>
+      <div class="progress" id="progress" hidden><div class="fill" id="fill"></div></div>
+    </header>
+
+    <dialog id="confirm">
+      <form method="dialog">
+        <h2>¿Eliminar esta grabación?</h2>
+        <p id="confirm-text"></p>
+        <div class="dialog-actions">
+          <button class="ghost" value="cancel">Cancelar</button>
+          <button class="danger-solid" value="ok">Eliminar</button>
+        </div>
+      </form>
+    </dialog>
+
+    <dialog id="cover">
+      <form method="dialog">
+        <h2>Datos de la portada</h2>
+        <label for="author">Autor</label>
+        <input id="author" type="text" placeholder="Tu nombre" autocomplete="off" />
+        <label for="system">Sistema o aplicación</label>
+        <input id="system" type="text" placeholder="SAP S/4HANA · Portal de Compras" autocomplete="off" />
+        <div class="dialog-actions">
+          <button class="ghost" value="cancel">Cancelar</button>
+          <button class="primary" id="save-cover" value="ok">Guardar</button>
+        </div>
+      </form>
+    </dialog>
+
+    <main id="main">
+      <!-- Índice lateral: con 30 pasos, el scroll continuo no sirve para navegar. -->
+      <nav class="rail" id="rail" aria-label="Ir a un paso"></nav>
+
+      <div class="col">
+        <p class="msg" id="msg" role="status" aria-live="polite"></p>
+        <ol class="steps" id="steps"></ol>
+        <div class="empty" id="empty" hidden>
+          <p>Esta sesión no tiene pasos.</p>
+        </div>
+      </div>
+    </main>
+
+    <template id="tpl-step">
+      <li class="step">
+        <div class="shot">
+          <img class="full" alt="" loading="lazy" />
+          <img class="zoom" alt="" loading="lazy" />
+        </div>
+        <div class="side">
+          <div class="side-head">
+            <span class="num"></span>
+            <span class="chip"></span>
+            <div class="tools">
+              <button class="icon up" title="Subir este paso" aria-label="Subir este paso">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><use href="#i-up"/></svg></button>
+              <button class="icon down" title="Bajar este paso" aria-label="Bajar este paso">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><use href="#i-down"/></svg></button>
+              <button class="icon del" title="Eliminar este paso" aria-label="Eliminar este paso">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><use href="#i-trash"/></svg></button>
+            </div>
+          </div>
+          <label class="sr">Descripción del paso</label>
+          <textarea class="desc" rows="3" spellcheck="true"></textarea>
+          <dl class="meta"></dl>
+        </div>
+      </li>
+    </template>
+
+    <script type="module" src="review.js"></script>
+  </body>
+</html>

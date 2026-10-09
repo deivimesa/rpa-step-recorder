@@ -1,0 +1,8 @@
+# RPA Step Recorder - versión escritorio (Windows)
+uiautomation==2.0.20   # inspección del árbol de UI Automation (control type, name, AutomationId...)
+psutil==6.0.0          # nombre del ejecutable (.exe) dueño de la ventana
+pynput==1.7.7          # hooks globales de ratón y teclado
+mss==9.0.1             # captura de pantalla rápida y multi-monitor
+Pillow==10.4.0         # anotación de capturas (recuadro rojo y zoom)
+python-docx==1.1.2     # exportación a Word
+fpdf2==2.7.9           # exportación a PDF

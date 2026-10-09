@@ -1,0 +1,136 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <link rel="stylesheet" href="popup.css" />
+  </head>
+  <body data-state="idle">
+    <!-- Iconos SVG en un sprite: una sola familia (trazo 1.75, 20px), sin emojis. -->
+    <svg width="0" height="0" style="position:absolute" aria-hidden="true">
+      <defs>
+        <g id="i-rec"><circle cx="12" cy="12" r="8" fill="currentColor" stroke="none" /></g>
+        <g id="i-stop"><rect x="6" y="6" width="12" height="12" rx="2.5" fill="currentColor" stroke="none" /></g>
+        <g id="i-doc"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z" /><path d="M14 3v5h5" /></g>
+        <g id="i-undo"><path d="M3 8h11a5 5 0 0 1 0 10H8" /><path d="m7 4-4 4 4 4" /></g>
+        <g id="i-folder"><path d="M4 20a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h4l2 3h8a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2z" /></g>
+        <g id="i-chevron"><path d="m9 6 6 6-6 6" /></g>
+        <g id="i-copy"><rect x="9" y="9" width="12" height="12" rx="2" /><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" /></g>
+        <g id="i-alert"><path d="M12 9v4" /><path d="M12 17h.01" /><circle cx="12" cy="12" r="9" /></g>
+        <g id="i-check"><path d="m4 12 5 5L20 6" /></g>
+        <g id="i-pointer"><path d="m4 4 7 16 2.5-6.5L20 11z" /></g>
+        <g id="i-refresh"><path d="M21 12a9 9 0 1 1-3-6.7" /><path d="M21 4v5h-5" /></g>
+      </defs>
+    </svg>
+
+    <header class="top">
+      <span class="mark">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><use href="#i-rec" /></svg>
+      </span>
+      <span class="name">RPA Step Recorder</span>
+      <span class="pill" id="pill" role="status" aria-live="polite">
+        <span class="dot"></span><span id="pill-text">Listo</span>
+      </span>
+    </header>
+
+    <main>
+      <!-- ══ Listo para grabar ══ -->
+      <section data-when="idle">
+        <div class="field">
+          <label for="name">Nombre del proceso</label>
+          <input type="text" id="name" placeholder="Alta de proveedor en el portal" autocomplete="off" />
+          <p class="help">Encabeza la portada del documento.</p>
+        </div>
+
+        <details class="extra">
+          <summary>
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><use href="#i-chevron" /></svg>
+            Datos de la portada
+          </summary>
+          <div class="extra-body">
+            <div class="field">
+              <label for="author">Autor</label>
+              <input type="text" id="author" placeholder="Tu nombre" autocomplete="off" />
+            </div>
+            <div class="field">
+              <label for="system">Sistema o aplicación</label>
+              <input type="text" id="system" placeholder="SAP S/4HANA · Portal de Compras" autocomplete="off" />
+            </div>
+          </div>
+        </details>
+
+        <button class="primary" id="start">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><use href="#i-rec" /></svg>
+          Iniciar grabación
+        </button>
+
+        <div id="last-wrap" hidden>
+          <p class="section-title" id="last-title">Última grabación</p>
+          <div class="card">
+            <div style="font-weight:600; margin-bottom:2px" id="last-name"></div>
+            <div style="color:var(--muted); font-size:11.5px; margin-bottom:12px" id="last-meta"></div>
+            <button class="primary" id="review" style="height:38px; width:100%">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><use href="#i-doc" /></svg>
+              Revisar y exportar
+            </button>
+            <button class="ghost" id="resume" style="width:100%; margin-top:6px">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" aria-hidden="true"><use href="#i-play" /></svg>
+              Seguir grabando en esta
+            </button>
+          </div>
+          <p class="section-title" id="older-title" hidden>Anteriores</p>
+          <div class="sessions" id="older"></div>
+        </div>
+      </section>
+
+      <!-- ══ Grabando ══ -->
+      <section data-when="recording">
+        <div class="hero">
+          <div>
+            <div class="count" id="count">0</div>
+            <div class="count-label" id="count-label">pasos</div>
+          </div>
+          <div class="timer">
+            <div id="timer">00:00</div>
+            <div class="timer-label">en curso</div>
+          </div>
+        </div>
+
+        <div id="empty" class="hint" style="margin-top:12px">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><use href="#i-pointer" /></svg>
+          <div>Haz clic en cualquier botón o campo del navegador. <b>Cada clic se convierte en un paso</b> con su captura y su descripción.</div>
+        </div>
+
+        <div id="live" hidden>
+          <p class="section-title">Pasos capturados</p>
+          <div class="steps" id="steps"></div>
+          <button class="ghost" id="undo" style="width:100%; margin-top:10px">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><use href="#i-undo" /></svg>
+            Deshacer el último paso
+          </button>
+        </div>
+
+        <div class="row" style="margin-top:16px">
+          <button class="ghost" id="pause" style="flex:0 0 auto; width:104px">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><use href="#i-pause" /></svg>
+            <span id="pause-label">Pausar</span>
+          </button>
+          <button class="primary stop" id="stop" style="flex:1; width:auto">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><use href="#i-stop" /></svg>
+            Detener y revisar
+          </button>
+        </div>
+      </section>
+
+      <p class="msg" id="msg" role="status" aria-live="polite"></p>
+    </main>
+
+    <footer>
+      <span><kbd id="k-rec"></kbd> grabar</span>
+      <span><kbd id="k-note"></kbd> nota</span>
+      <span class="sep"></span>
+      <span id="storage"></span>
+    </footer>
+
+    <script src="popup.js"></script>
+  </body>
+</html>

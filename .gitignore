@@ -1,0 +1,74 @@
+# ---------------------------------------------------------------------------
+# RPA Step Recorder - .gitignore
+# ---------------------------------------------------------------------------
+
+# --- Python ---------------------------------------------------------------
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+
+# Entornos virtuales
+.venv/
+venv/
+env/
+ENV/
+.env
+
+# Caches de herramientas
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+*.egg-info/
+.eggs/
+
+# --- PyInstaller / empaquetado --------------------------------------------
+# Los binarios NO se versionan: se publican como Release en GitHub.
+build/
+dist/
+desktop/build/
+desktop/dist/
+*.manifest
+
+# OJO: el .spec SÍ se versiona (es la receta reproducible del build).
+# No lo ignoramos. Si generas .spec temporales, nómbralos *.tmp.spec.
+*.tmp.spec
+
+# .ico generado automáticamente desde los PNG durante el build
+desktop/RPAStepRecorder.ico
+
+# --- Logs y temporales -----------------------------------------------------
+*.log
+logs/
+*.tmp
+*.bak
+*.swp
+
+# --- Windows ---------------------------------------------------------------
+Thumbs.db
+Thumbs.db:encryptable
+ehthumbs.db
+ehthumbs_vista.db
+Desktop.ini
+$RECYCLE.BIN/
+*.lnk
+
+# --- macOS ----------------------------------------------------------------
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# --- IDEs / editores -------------------------------------------------------
+.idea/
+.vscode/
+*.sublime-workspace
+*.sublime-project
+
+# ---------------------------------------------------------------------------
+# NO ignorar recursos necesarios (se mantienen explícitamente versionados):
+#   extension/icons/*.png   -> iconos de la extensión
+#   desktop/**/*.py         -> código fuente
+#   *.spec                  -> receta de empaquetado
+# ---------------------------------------------------------------------------

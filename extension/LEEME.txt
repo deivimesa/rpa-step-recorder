@@ -1,0 +1,116 @@
+RPA STEP RECORDER — extensión para Chrome / Edge
+================================================
+
+Graba lo que haces en el navegador y genera la documentación del proceso
+en Word y PDF. Funciona en Windows, Mac y Linux, sin instalar nada más
+y sin conexión: todo ocurre dentro de tu navegador.
+
+
+CÓMO INSTALARLA (una sola vez, 30 segundos)
+-------------------------------------------
+
+1. Descomprime este archivo en una carpeta donde vaya a quedarse.
+   No la borres ni la muevas después: Chrome la lee de ahí cada vez.
+
+2. Abre el navegador y escribe en la barra de direcciones:
+
+       chrome://extensions          (en Edge:  edge://extensions)
+
+3. Activa el interruptor "Modo de desarrollador", arriba a la derecha.
+
+4. Pulsa "Cargar descomprimida" y elige la carpeta que descomprimiste
+   (la que contiene el archivo manifest.json).
+
+5. Aparecerá el icono en la barra del navegador. Si no lo ves, pulsa el
+   icono de la pieza de puzle y fija "RPA Step Recorder".
+
+
+CÓMO USARLA
+-----------
+
+1. Pulsa el icono y escribe el nombre del proceso.
+   Pulsa "Iniciar grabación".
+
+2. Trabaja normal. La extensión registra sola los clics, lo que escribes en
+   los campos, lo que eliges en las listas y las teclas Enter y Escape.
+   En cada paso captura la pantalla, resalta el elemento en rojo y muestra
+   una tarjeta con la descripción ya escrita.
+
+   Las contraseñas nunca se guardan: el paso dice "Escribir la contraseña"
+   y no registra el contenido.
+
+       Enter  guarda el paso
+       Esc    acepta la descripción sugerida tal cual
+       Papelera descarta esa captura
+
+   Si no escribes nada y sigues haciendo clic, cada paso se guarda igual
+   con su descripción automática. Puedes grabar de corrido y corregir
+   después.
+
+   Si necesitas hacer algo que no es parte del proceso, pulsa "Pausar".
+
+3. Cuando acabes, pulsa "Detener y revisar". Se abre una página donde
+   puedes corregir cada descripción, reordenar o borrar pasos. El índice
+   de la izquierda permite saltar de un paso a otro.
+
+4. Pulsa "Word" o "PDF". El documento se descarga a tu carpeta de
+   descargas.
+
+
+ATAJOS DE TECLADO
+-----------------
+
+    Ctrl+Shift+9     iniciar / detener la grabación
+    Ctrl+Shift+8     añadir un paso de sólo nota
+
+(en Mac, Cmd en lugar de Ctrl)
+
+
+QUÉ CONTIENE EL DOCUMENTO
+-------------------------
+
+  · Portada con el proceso, el sistema, el autor y la fecha
+  · Tabla resumen con todos los pasos numerados
+  · Una página por paso: descripción, captura completa con el elemento
+    resaltado, detalle ampliado y los datos técnicos que necesita quien
+    programe el bot (selector CSS, XPath, id, URL)
+
+
+PREGUNTAS FRECUENTES
+--------------------
+
+¿Envía algo a internet?
+  No. Las capturas y los documentos se generan dentro de tu navegador y
+  se guardan sólo en tu equipo. La extensión no hace ninguna petición a
+  ningún servidor.
+
+¿Dónde se guardan las grabaciones?
+  En el almacenamiento local del navegador, hasta que las borres desde
+  la página de revisión. Ocupan alrededor de 1,5 MB por paso, así que
+  conviene borrar las grabaciones ya exportadas.
+
+El navegador me avisa de las extensiones en modo de desarrollador.
+  Es normal con las extensiones cargadas a mano. Puedes cerrar el aviso;
+  la extensión sigue funcionando.
+
+¿Funciona con ventanas emergentes y modales?
+  Sí. Los modales de la página y las ventanas abiertas con window.open se graban
+  con normalidad, y la tarjeta de descripción se dibuja encima del modal.
+  No se pueden capturar los diálogos del propio navegador (alert, confirmar,
+  elegir archivo, imprimir): no forman parte de la página. El paso se guarda
+  igual con su descripción automática y puedes corregirla al revisar.
+
+No funciona en una pestaña concreta.
+  En las páginas internas del navegador (chrome://, edge://, la tienda de
+  extensiones) ninguna extensión puede actuar. Es una restricción del
+  propio navegador.
+
+La captura sale de la pantalla siguiente.
+  La foto se toma al pulsar el botón, antes de que la página cambie. En
+  páginas que redirigen al instante puede colarse la página destino:
+  borra ese paso en la página de revisión y repítelo.
+
+No puedo activar el modo de desarrollador.
+  Tu empresa lo tiene bloqueado por política de Chrome. Habla con tu área
+  de sistemas: la alternativa es publicarla en la Chrome Web Store como
+  extensión no listada.

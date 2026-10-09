@@ -1,0 +1,52 @@
+{
+  "manifest_version": 3,
+  "name": "RPA Step Recorder",
+  "version": "2.0.0",
+  "description": "Graba cada clic con su captura y su descripción, y genera la documentación del proceso en Word y PDF. Funciona sin conexión.",
+  "permissions": ["tabs", "storage", "unlimitedStorage", "activeTab"],
+  "host_permissions": ["<all_urls>"],
+  "background": {
+    "service_worker": "background.js",
+    "type": "module"
+  },
+  "action": {
+    "default_popup": "popup.html",
+    "default_title": "RPA Step Recorder",
+    "default_icon": {
+      "16": "icons/icon16.png",
+      "32": "icons/icon32.png",
+      "48": "icons/icon48.png",
+      "128": "icons/icon128.png"
+    }
+  },
+  "icons": {
+    "16": "icons/icon16.png",
+    "32": "icons/icon32.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
+  },
+  "content_scripts": [
+    {
+      "matches": ["<all_urls>"],
+      "js": ["content.js"],
+      "run_at": "document_start",
+      "all_frames": true
+    }
+  ],
+  "web_accessible_resources": [
+    {
+      "resources": ["overlay.css", "tokens.css"],
+      "matches": ["<all_urls>"]
+    }
+  ],
+  "commands": {
+    "toggle-recording": {
+      "suggested_key": { "default": "Ctrl+Shift+9", "mac": "Command+Shift+9" },
+      "description": "Iniciar / detener la grabación"
+    },
+    "add-note": {
+      "suggested_key": { "default": "Ctrl+Shift+8", "mac": "Command+Shift+8" },
+      "description": "Agregar un paso de solo nota (sin clic)"
+    }
+  }
+}
