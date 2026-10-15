@@ -89,18 +89,37 @@ LH_BODY, LH_BODY_LG, LH_SMALL, LH_CAPTION = 16, 18, 14, 13
 SPACE_1, SPACE_2, SPACE_3, SPACE_4, SPACE_5, SPACE_6, SPACE_8 = 4, 8, 12, 16, 20, 24, 32
 
 # ── Color (centralizado) ────────────────────────────────────
-ACCENT = "#d62d2d"
+# Paleta derivada de los design tokens de marca (design-tokens.css):
+# verde primario #008f57, amarillo #ffdc5e y verdes claros de apoyo.
+#
+# BRAND  → acciones primarias (Iniciar, Exportar): el verde de la marca.
+# ACCENT → se reserva en rojo para el estado de "grabando" (punto, contador,
+#          chip de estado), que necesita una señal visual inequívoca.
+BRAND = "#008f57"            # verde primario de marca (acciones)
+BRAND_ACTIVE = "#007446"     # verde más oscuro para hover/activo
+BRAND_DISABLED = "#a7d4bf"   # verde desaturado para estado deshabilitado
+BRAND_ON = "#ffffff"         # texto sobre el verde de marca
+BRAND_DARK = "#00704a"       # verde oscurecido para texto sobre superficies claras
+BRAND_LIGHT = "#60ab58"      # verde claro de marca
+BRAND_LIGHT_ALT = "#80bd78"  # verde claro alternativo
+BRAND_SOFT = "#e8f3ec"       # verde muy tenue para superficies/realces
+BRAND_YELLOW = "#ffdc5e"     # amarillo de marca (acento secundario)
+
+ACCENT = "#d62d2d"           # rojo: estado de grabación
 ACCENT_ACTIVE = "#b92525"
 ACCENT_DISABLED = "#e3a3a3"
-INK = "#1a1a1a"
-MUTED = "#6b6b6b"
-BG = "#f7f7f8"
+# Neutros teñidos con un matiz verde para que la interfaz respire la marca
+# en vez de usar grises planos.
+INK = "#15211b"              # tinta con matiz verdoso
+MUTED = "#5b6b61"            # texto tenue verdoso
+BG = "#f3f8f4"               # fondo con un verde muy tenue
 CARD = "#ffffff"
-CARD_SOFT = "#fcfcfd"
-FIELD = "#fbfbfc"
-BORDER = "#e3e4e8"
-BADGE_BG = "#eef0f2"
-REL_COLORS = {"alta": "#2e9e5b", "media": "#e0a106", "baja": "#d62d2d"}
+CARD_SOFT = "#f7fbf8"
+FIELD = "#f8fbf9"
+BORDER = "#d7e3da"           # bordes con matiz verde
+BADGE_BG = "#e8f3ec"         # badge con el verde suave de marca
+# Fiabilidad: verde de marca (alta), ámbar legible (media), rojo (baja).
+REL_COLORS = {"alta": BRAND, "media": "#e0a106", "baja": "#d62d2d"}
 
 
 def bind_wheel(area, canvas) -> None:

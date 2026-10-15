@@ -10,10 +10,25 @@ import re
 import unicodedata
 from datetime import datetime
 
-ACCENT_HEX = "D62D2D"
-INK_HEX = "1A1A1A"
-MUTED_HEX = "6B6B6B"
-RULE_HEX = "DDDDDD"
+# ── Paleta de marca (design-tokens.css) ────────────────────
+# Verde primario, amarillo, verdes claros de apoyo y blanco. Se explota toda
+# la paleta en el documento para que respire la marca, no solo el verde suelto.
+BRAND_GREEN = "008F57"        # verde primario
+BRAND_GREEN_DARK = "00704A"   # verde oscurecido (texto/encabezados sobre claro)
+BRAND_YELLOW = "FFDC5E"       # amarillo de marca (acento secundario, bandas)
+BRAND_GREEN_LIGHT = "60AB58"  # verde claro
+BRAND_GREEN_LIGHT_ALT = "80BD78"
+BRAND_GREEN_SOFT = "E8F3EC"   # verde muy tenue para fondos de tabla/superficies
+
+# Acento del documento: verde primario de marca. Se usa en títulos de paso,
+# subtítulos y como color de encabezado.
+ACCENT_HEX = BRAND_GREEN
+ACCENT_SOFT_HEX = BRAND_GREEN_SOFT   # fondo tenue de cabeceras de tabla
+BAND_HEX = BRAND_YELLOW              # banda de acento de la portada
+# Neutros teñidos de verde (en vez de grises planos) para alinear con la marca.
+INK_HEX = "15211B"            # tinta con matiz verdoso
+MUTED_HEX = "5B6B61"          # texto tenue verdoso
+RULE_HEX = "D7E3DA"           # reglas/bordes con matiz verde
 
 # ── Tipografía del documento (unificada Word + PDF) ─────────
 # Familias de documento.
@@ -30,7 +45,9 @@ FS_LEAD, FS_SECTION, FS_BODY, FS_SMALL, FS_CAPTION = 12, 10, 10, 9, 8
 LH_TITLE, LH_HEADING, LH_LEAD, LH_BODY = 1.1, 1.25, 1.35, 1.4
 
 # Colores de los niveles de fiabilidad (compartidos por Word y PDF).
-GREEN_HEX = "1F8A3B"
+# Alta = verde de marca. Media = ámbar oscurecido derivado del amarillo de
+# marca (el amarillo puro #FFDC5E no da contraste como texto). Baja = rojo.
+GREEN_HEX = BRAND_GREEN
 AMBER_HEX = "B87A00"
 RED_HEX = "C02B2B"
 

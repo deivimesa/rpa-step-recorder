@@ -78,7 +78,11 @@ def _shade_cell(cell, hex_fill: str):
 
 
 def _accent_band(doc):
-    """Dibuja una banda de acento fina bajo el título (párrafo con borde)."""
+    """Banda de acento bajo el título: barra verde con remate amarillo de marca.
+
+    Se dibuja con un párrafo corto sombreado en verde y una porción inicial en
+    amarillo, imitando la banda del PDF para que ambos formatos combinen.
+    """
     band = doc.add_paragraph()
     band.paragraph_format.space_before = Pt(2)
     band.paragraph_format.space_after = Pt(10)
@@ -91,6 +95,22 @@ def _accent_band(doc):
     bottom.set(qn("w:color"), dc.ACCENT_HEX)
     borders.append(bottom)
     p_pr.append(borders)
+
+    # Remate amarillo de marca: un recuadro corto sombreado sobre la banda.
+    tab = doc.add_paragraph()
+    tab.paragraph_format.space_before = Pt(0)
+    tab.paragraph_format.space_after = Pt(10)
+    tab_pr = tab._p.get_or_add_pPr()
+    tab_border = OxmlElement("w:pBdr")
+    tab_bottom = OxmlElement("w:bottom")
+    tab_bottom.set(qn("w:val"), "single")
+    tab_bottom.set(qn("w:sz"), "24")
+    tab_bottom.set(qn("w:space"), "1")
+    tab_bottom.set(qn("w:color"), dc.BAND_HEX)
+    tab_border.append(tab_bottom)
+    tab_pr.append(tab_border)
+    # Indent para que el remate amarillo solo ocupe el arranque de la línea.
+    tab.paragraph_format.right_indent = Inches(4.6)
     return band
 
 
@@ -209,11 +229,11 @@ def _step_index(doc, session):
     table.alignment = WD_TABLE_ALIGNMENT.LEFT
     table.allow_autofit = False
 
-    # Cabecera con fondo tenue y etiquetas claras.
+    # Cabecera con fondo verde tenue de marca y etiquetas en verde oscuro.
     header = table.rows[0].cells
     for cell, label in zip(header, ("#", "Descripción", "Fiabilidad")):
-        _set_cell_text(cell, label, bold=True, color=INK, size=FS_SMALL)
-        _shade_cell(cell, "F2F2F2")
+        _set_cell_text(cell, label, bold=True, color=_rgb(dc.BRAND_GREEN_DARK), size=FS_SMALL)
+        _shade_cell(cell, dc.ACCENT_SOFT_HEX)
     header[0].width = Inches(0.5)
     header[1].width = Inches(4.6)
     header[2].width = Inches(1.2)

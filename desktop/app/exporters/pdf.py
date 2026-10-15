@@ -79,6 +79,8 @@ def _rgb(hex_str: str) -> tuple[int, int, int]:
 
 
 ACCENT = _rgb(dc.ACCENT_HEX)
+ACCENT_SOFT = _rgb(dc.ACCENT_SOFT_HEX)
+BAND = _rgb(dc.BAND_HEX)        # amarillo de marca para la banda de portada
 INK = _rgb(dc.INK_HEX)
 MUTED = _rgb(dc.MUTED_HEX)
 RULE = _rgb(dc.RULE_HEX)
@@ -87,7 +89,7 @@ REL_COLORS = {
     "media": _rgb(dc.AMBER_HEX),
     "baja": _rgb(dc.RED_HEX),
 }
-HEADER_FILL = (242, 242, 242)  # fondo tenue de cabeceras de tabla
+HEADER_FILL = _rgb(dc.ACCENT_SOFT_HEX)  # fondo verde tenue de cabeceras de tabla
 
 # ── geometría de página (mm) ──
 PAGE_W = 210
@@ -293,14 +295,15 @@ def _cover(pdf: _PDF, session):
     pdf.set_font(pdf.font_main, size=FS_SUBTITLE)
     pdf.set_text_color(*ACCENT)
     pdf.cell(0, 8, _text(dc.DOC_SUBTITLE))
-    pdf.ln(10)
+    pdf.ln(11)
 
-    # Banda de acento bajo el título.
-    pdf.set_draw_color(*ACCENT)
-    pdf.set_line_width(1.2)
-    pdf.line(MARGIN, pdf.get_y(), PAGE_W - MARGIN, pdf.get_y())
-    pdf.set_line_width(0.2)
-    pdf.ln(10)
+    # Banda de acento bajo el título: barra verde con remate amarillo de marca.
+    band_y = pdf.get_y()
+    pdf.set_fill_color(*ACCENT)
+    pdf.rect(MARGIN, band_y, CONTENT_W, 2.4, style="F")
+    pdf.set_fill_color(*BAND)
+    pdf.rect(MARGIN, band_y, 42, 2.4, style="F")  # acento amarillo a la izquierda
+    pdf.ln(12)
 
     _kv_table(pdf, dc.cover_rows(session))
 
@@ -330,9 +333,9 @@ def _step_index(pdf: _PDF, session):
     rel_w = 28
     desc_w = CONTENT_W - num_w - rel_w
 
-    # Cabecera con fondo tenue.
+    # Cabecera con fondo verde tenue de marca y texto en verde oscuro.
     pdf.set_fill_color(*HEADER_FILL)
-    pdf.set_text_color(*INK)
+    pdf.set_text_color(*_rgb(dc.BRAND_GREEN_DARK))
     pdf.set_font(pdf.font_main, style="B", size=FS_SMALL)
     pdf.cell(num_w, 8, _text("#"), fill=True, align="C")
     pdf.cell(desc_w, 8, _text("Descripción"), fill=True)

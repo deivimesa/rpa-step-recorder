@@ -3,35 +3,53 @@
    que se inyecta en la página del usuario. Todos los pares texto/fondo están
    verificados a 4.5:1 o más (AA) en ambos temas.
 
+   La paleta se deriva de los design tokens de marca (design-tokens.css):
+   verde primario #008f57, amarillo #ffdc5e y verdes claros de apoyo. Los
+   nombres semánticos (--accent, --accent-soft, ...) se mantienen para que el
+   resto de hojas de estilo no cambie: aquí es donde la marca se "cablea".
+
    Tipografía: pila del sistema (San Francisco en macOS). Se prefiere a cargar
    Inter desde Google Fonts porque la ventanita vive dentro de páginas ajenas:
    una fuente remota puede bloquearse por CSP, tarda en llegar y filtra tráfico.  */
 
 :root,
 :host {
+  /* --- Marca (espejo de design-tokens.css) --- */
+  --brand-green-primary: #008f57;
+  --brand-yellow-primary: #ffdc5e;
+  --brand-green-light: #60ab58;
+  --brand-green-light-alt: #80bd78;
+  --brand-white: #ffffff;
+
   --font: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", system-ui, sans-serif;
   --font-mono: ui-monospace, "SF Mono", Menlo, monospace;
 
-  --bg: #ffffff;
-  --surface: #f4f7f7;
-  --surface-hover: #eaf0ef;
-  --border: #d6e0de;
-  --border-strong: #7f9390;   /* borde de campos y botones: 3:1 con el fondo (WCAG 1.4.11) */
+  --bg: var(--brand-white);
+  --surface: #f1f7f3;
+  --surface-hover: #e4efe8;
+  --border: #cfe3d7;
+  --border-strong: #6f8a7c;   /* borde de campos y botones: 3:1 con el fondo (WCAG 1.4.11) */
 
-  --text: #0f1b1a;
-  --muted: #5a6b6a;
+  --text: #10211a;
+  --muted: #4a5c53;
 
-  --accent: #0f766e;
-  --accent-hover: #115e59;
-  --on-accent: #ffffff;
-  --accent-soft: #e6f4f2;
-  --accent-text: #0d7a70;
+  --accent: var(--brand-green-primary);
+  --accent-hover: #007446;     /* verde primario más oscuro para hover */
+  --on-accent: var(--brand-white);
+  --accent-soft: #e2f3ea;
+  --accent-text: #006b40;      /* verde oscurecido: 4.5:1 sobre blanco y sobre accent-soft */
+
+  /* Acento secundario: amarillo de marca para realces puntuales (chips,
+     marcadores). Como texto necesita tinta oscura; de ahí --on-highlight. */
+  --highlight: var(--brand-yellow-primary);
+  --highlight-soft: #fff6d6;
+  --on-highlight: #4a3a00;
 
   --rec: #b91c1c;
   --on-rec: #ffffff;
   --rec-soft: #fdecec;
 
-  --ring: #0f766e;
+  --ring: var(--brand-green-primary);
   --shadow: 0 10px 30px rgba(15, 27, 26, .16), 0 2px 8px rgba(15, 27, 26, .08);
 
   /* Ritmo de 4 px. Densidad alta: es una herramienta, no una página de marketing. */
@@ -46,26 +64,31 @@
 @media (prefers-color-scheme: dark) {
   :root,
   :host {
-    --bg: #15191a;
-    --surface: #1d2325;
-    --surface-hover: #252d2f;
-    --border: #313a3b;
-    --border-strong: #5f6d6a;
+    --bg: #12171a;
+    --surface: #19211f;
+    --surface-hover: #212b28;
+    --border: #2c3a34;
+    --border-strong: #5c7066;
 
-    --text: #e9efee;
-    --muted: #9daba9;
+    --text: #e8f0ec;
+    --muted: #9bb0a6;
 
-    --accent: #2dd4bf;
-    --accent-hover: #5eead4;
-    --on-accent: #04211e;
-    --accent-soft: #10312d;
-    --accent-text: #2dd4bf;
+    /* En oscuro usamos los verdes claros de marca para alcanzar contraste AA */
+    --accent: var(--brand-green-light-alt);   /* #80bd78 */
+    --accent-hover: #9acb92;
+    --on-accent: #06231a;                      /* texto oscuro sobre verde claro */
+    --accent-soft: #142b20;
+    --accent-text: #a7d6a0;                    /* verde claro: >4.5:1 sobre fondos oscuros */
+
+    --highlight: var(--brand-yellow-primary);
+    --highlight-soft: #3a3210;
+    --on-highlight: #ffdc5e;
 
     --rec: #fb7185;
     --on-rec: #2b0b10;   /* el rojo claro del tema oscuro pide texto oscuro */
     --rec-soft: #331a1e;
 
-    --ring: #2dd4bf;
+    --ring: var(--brand-green-light-alt);
     --shadow: 0 12px 34px rgba(0, 0, 0, .55), 0 2px 8px rgba(0, 0, 0, .4);
   }
 }

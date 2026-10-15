@@ -79,10 +79,10 @@ class ReviewWindow(tk.Toplevel):
         style.configure("TLabelframe.Label", background=BG, foreground=INK, font=ut.FONT_SMALL_STRONG)
         style.configure("TButton", padding=ut.SPACE_2)
         style.configure(
-            "Accent.TButton", background=ACCENT, foreground="#ffffff",
+            "Accent.TButton", background=ut.BRAND, foreground=ut.BRAND_ON,
             font=ut.FONT_SMALL_STRONG, padding=ut.SPACE_2, borderwidth=0,
         )
-        style.map("Accent.TButton", background=[("active", ut.ACCENT_ACTIVE)])
+        style.map("Accent.TButton", background=[("active", ut.BRAND_ACTIVE)])
 
     # ── interfaz ────────────────────────────────────────────
 

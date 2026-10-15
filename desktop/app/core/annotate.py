@@ -1,4 +1,4 @@
-"""Anotación de capturas: recuadro rojo sobre el elemento y recorte ampliado.
+"""Anotación de capturas: recuadro de marca sobre el elemento y recorte ampliado.
 
 Port de lib/annotate.js usando Pillow en lugar de OffscreenCanvas. Las
 coordenadas del rectángulo ya vienen en píxeles físicos de pantalla (UI
@@ -9,7 +9,7 @@ from __future__ import annotations
 
 from PIL import Image, ImageDraw
 
-HIGHLIGHT = (214, 45, 45)       # #d62d2d
+HIGHLIGHT = (0, 143, 87)        # #008f57 (verde primario de marca)
 SCRIM = 0.20                     # oscurecido suave
 BORDER = 3
 ZOOM_MIN_WIDTH = 720

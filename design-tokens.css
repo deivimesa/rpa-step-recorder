@@ -1,0 +1,45 @@
+:root {
+  /* Confirmados por el manual */
+  --brand-green-primary: #008f57;
+  --brand-yellow-primary: #ffdc5e;
+  --brand-green-light: #60ab58;
+  --brand-green-light-alt: #80bd78;
+  --brand-white: #ffffff;
+
+  /* Neutros y escala de interfaz: provisionales, no lineamientos oficiales */
+  --color-background: var(--brand-white);
+  --color-surface: var(--brand-white);
+  --color-text: #1f1f1d;
+  --color-text-muted: #48474c;
+  --color-action: var(--brand-green-primary);
+  --color-action-on: var(--brand-white);
+  --color-accent: var(--brand-yellow-primary);
+  --color-accent-surface: var(--brand-green-light-alt);
+  --color-focus: var(--brand-green-primary);
+
+  --font-family-ui: system-ui, -apple-system, "Segoe UI", sans-serif;
+  --layout-content-max: 72rem;
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-6: 1.5rem;
+  --space-8: 2rem;
+  --radius-sm: 0.25rem;
+  --radius-md: 0.5rem;
+
+  --button-primary-background: var(--color-action);
+  --button-primary-text: var(--color-action-on);
+  --button-focus-ring: var(--color-focus);
+}
+
+body {
+  background: var(--color-background);
+  color: var(--color-text);
+  font-family: var(--font-family-ui);
+}
+
+:focus-visible {
+  outline: 3px solid var(--button-focus-ring);
+  outline-offset: 3px;
+}

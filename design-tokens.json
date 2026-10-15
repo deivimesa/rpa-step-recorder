@@ -1,0 +1,48 @@
+{
+  "brand": {
+    "color": {
+      "green-primary": { "value": "#008F57", "status": "confirmed" },
+      "yellow-primary": { "value": "#FFDC5E", "status": "confirmed" },
+      "green-light": { "value": "#60AB58", "status": "confirmed" },
+      "green-light-alt": { "value": "#80BD78", "status": "confirmed" },
+      "white": { "value": "#FFFFFF", "status": "confirmed" }
+    }
+  },
+  "semantic": {
+    "color": {
+      "background": { "value": "{brand.color.white}" },
+      "surface": { "value": "{brand.color.white}" },
+      "text": { "value": "#1F1F1D", "status": "provisional" },
+      "text-muted": { "value": "#48474C", "status": "provisional" },
+      "action": { "value": "{brand.color.green-primary}" },
+      "action-on": { "value": "{brand.color.white}" },
+      "accent": { "value": "{brand.color.yellow-primary}" },
+      "accent-surface": { "value": "{brand.color.green-light-alt}" },
+      "focus": { "value": "{brand.color.green-primary}" }
+    },
+    "typography": {
+      "font-family-ui": {
+        "value": "system-ui, -apple-system, \"Segoe UI\", sans-serif",
+        "status": "provisional"
+      }
+    },
+    "layout": {
+      "content-max": { "value": "72rem", "status": "provisional" },
+      "space-1": { "value": "0.25rem", "status": "provisional" },
+      "space-2": { "value": "0.5rem", "status": "provisional" },
+      "space-3": { "value": "0.75rem", "status": "provisional" },
+      "space-4": { "value": "1rem", "status": "provisional" },
+      "space-6": { "value": "1.5rem", "status": "provisional" },
+      "space-8": { "value": "2rem", "status": "provisional" },
+      "radius-sm": { "value": "0.25rem", "status": "provisional" },
+      "radius-md": { "value": "0.5rem", "status": "provisional" }
+    }
+  },
+  "component": {
+    "button": {
+      "primary-background": { "value": "{semantic.color.action}" },
+      "primary-text": { "value": "{semantic.color.action-on}" },
+      "focus-ring": { "value": "{semantic.color.focus}" }
+    }
+  }
+}

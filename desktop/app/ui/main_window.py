@@ -105,18 +105,19 @@ class App(tk.Tk):
         style.configure("TLabelframe.Label", background=BG, foreground=MUTED, font=ut.FONT_CAPTION_STRONG)
         style.configure("TEntry", fieldbackground=CARD, padding=ut.SPACE_1)
         style.configure("TButton", padding=ut.SPACE_2)
-        # Botón grande de acento para "Iniciar grabación".
+        # Botón grande de acción primaria (verde de marca) para "Iniciar
+        # grabación" y "Detener y revisar".
         style.configure(
             "Accent.TButton",
-            background=ACCENT,
-            foreground="#ffffff",
+            background=ut.BRAND,
+            foreground=ut.BRAND_ON,
             font=ut.FONT_BODY_STRONG,
             padding=ut.SPACE_3,
             borderwidth=0,
         )
         style.map(
             "Accent.TButton",
-            background=[("active", ut.ACCENT_ACTIVE), ("disabled", ut.ACCENT_DISABLED)],
+            background=[("active", ut.BRAND_ACTIVE), ("disabled", ut.BRAND_DISABLED)],
         )
         # Botón secundario "fantasma": menos peso visual que el acento.
         # Fondo = CARD (se funde con el panel), sin relieve agresivo y texto
@@ -395,7 +396,7 @@ class App(tk.Tk):
             self._blink_on = not self._blink_on
             self._dot.config(fg=ACCENT if self._blink_on else ut.ACCENT_DISABLED)
         elif recording and paused:
-            self._dot.config(fg=REL_COLORS["media"])
+            self._dot.config(fg=ut.BRAND_YELLOW)
             self._blink_on = True
         else:
             self._dot.config(fg=MUTED)
@@ -472,11 +473,12 @@ class App(tk.Tk):
 
     def _set_pill(self, recording: bool, paused: bool):
         if recording and paused:
-            text, fg, bg = "En pausa", INK, "#f1c40f"
+            # Amarillo de marca para la pausa; tinta oscura para contraste.
+            text, fg, bg = "En pausa", INK, ut.BRAND_YELLOW
         elif recording:
             text, fg, bg = "Grabando", "#ffffff", ACCENT
         else:
-            text, fg, bg = "Listo", MUTED, "#ececed"
+            text, fg, bg = "Listo", MUTED, ut.BRAND_SOFT
         self._pill.config(text=text, fg=fg, bg=bg)
 
     def _refresh(self):
