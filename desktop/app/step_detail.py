@@ -20,6 +20,7 @@ from PIL import Image, ImageTk
 
 from . import doc_common as dc
 from . import storage
+from .backends import get_backend
 from . import ui_theme as ut
 
 # ── Paleta y tokens (centralizados en ui_theme) ─────────────
@@ -148,9 +149,7 @@ class StepDetail(tk.Toplevel):
         self._canvas.pack(side="left", fill="both", expand=True)
         scrollbar.pack(side="right", fill="y")
         # bind (no bind_all) para no robar el scroll a otras ventanas.
-        self._canvas.bind(
-            "<MouseWheel>", lambda e: self._canvas.yview_scroll(int(-e.delta / 120), "units")
-        )
+        ut.bind_wheel(container, self._canvas)
 
         self._build_header(self._body)
         self._build_images(self._body)
@@ -334,7 +333,7 @@ class StepDetail(tk.Toplevel):
         try:
             path = storage.image_path(self.session_id, name)
             if path.exists():
-                os.startfile(str(path))  # type: ignore[attr-defined]  (Windows)
+                get_backend().open_path(str(path))
         except Exception as err:
             messagebox.showerror("No se pudo abrir la imagen", str(err))
 

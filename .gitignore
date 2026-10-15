@@ -71,3 +71,6 @@ $RECYCLE.BIN/
 #   desktop/**/*.py         -> código fuente
 #   *.spec                  -> receta de empaquetado
 # ---------------------------------------------------------------------------
+
+# macOS build
+desktop/RPAStepRecorder.icns

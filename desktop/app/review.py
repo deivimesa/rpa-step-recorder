@@ -17,8 +17,8 @@ from tkinter import filedialog, messagebox, ttk
 from PIL import Image, ImageTk
 
 from . import doc_common as dc
-from . import inspector
 from . import storage
+from .backends import get_backend
 from . import ui_theme as ut
 from .exporters import pdf as pdf_exporter
 from .exporters import word as word_exporter
@@ -46,7 +46,6 @@ class ReviewWindow(tk.Toplevel):
         # ventana de revisión si se graba mientras está abierta. Al cerrarla lo
         # damos de baja para que el set de títulos no crezca sin límite.
         self._own_title = window_title
-        inspector.register_own_titles([window_title])
         self.bind("<Destroy>", self._on_destroy)
         self.geometry("960x680")
         self.configure(bg=BG)
@@ -65,7 +64,7 @@ class ReviewWindow(tk.Toplevel):
         # Solo al destruirse la ventana en sí (no un hijo), damos de baja el
         # título propio del set del inspector.
         if event.widget is self:
-            inspector.unregister_own_titles([self._own_title])
+            pass
 
     # ── estilo ──────────────────────────────────────────────
 
@@ -119,7 +118,7 @@ class ReviewWindow(tk.Toplevel):
         self._canvas.pack(side="left", fill="both", expand=True)
         scrollbar.pack(side="right", fill="y")
         # bind (no bind_all) para no robar el scroll a otras ventanas.
-        self._canvas.bind("<MouseWheel>", lambda e: self._canvas.yview_scroll(int(-e.delta / 120), "units"))
+        ut.bind_wheel(container, self._canvas)
 
         self._render_steps()
 
@@ -261,7 +260,7 @@ class ReviewWindow(tk.Toplevel):
         try:
             path = storage.image_path(self.session_id, name)
             if path.exists():
-                os.startfile(str(path))  # type: ignore[attr-defined]  (Windows)
+                get_backend().open_path(str(path))
         except Exception as err:
             messagebox.showerror("No se pudo abrir la imagen", str(err))
 
@@ -337,14 +336,33 @@ class ReviewWindow(tk.Toplevel):
 
         snapshot = copy.deepcopy(self.session)
 
+        result: dict = {}
+
         def work():
             try:
                 if kind == "word":
                     word_exporter.export(snapshot, path)
                 else:
                     pdf_exporter.export(snapshot, path)
-                self.after(0, lambda: messagebox.showinfo("Listo", f"Documento guardado en:\n{path}"))
-            except Exception as err:
-                self.after(0, lambda e=err: messagebox.showerror("Error al exportar", str(e)))
+                result["ok"] = True
+            except PermissionError:
+                result["error"] = "No se pudo escribir el archivo. ¿Está abierto en otra aplicación? Ciérralo o elige otro nombre."
+            except Exception as err:  # noqa: BLE001
+                result["error"] = str(err)
+
+        # Tk no es seguro entre hilos (en macOS se cuelga): el hilo solo deja el
+        # resultado y la ventana lo recoge con after().
+        def poll():
+            if not result:
+                self.after(150, poll)
+            elif result.get("ok"):
+                if messagebox.askyesno("Listo", f"Documento guardado en:\n{path}\n\n¿Abrirlo ahora?"):
+                    try:
+                        get_backend().open_path(path)
+                    except Exception:
+                        pass
+            else:
+                messagebox.showerror("Error al exportar", result["error"])
 
         threading.Thread(target=work, daemon=True).start()
+        poll()

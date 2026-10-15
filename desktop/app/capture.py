@@ -24,13 +24,17 @@ def grab_for_point(x: int, y: int, rect: dict | None):
         shot = sct.grab(monitor)
         image = Image.frombytes("RGB", shot.size, shot.bgra, "raw", "BGRX")
 
+    # En macOS (Retina) la captura tiene más píxeles que puntos tiene el
+    # monitor: el rectángulo del elemento (en puntos) se escala al de la imagen.
+    scale = image.width / monitor["width"] if monitor.get("width") else 1.0
+
     local_rect = None
     if rect and rect.get("width", 0) > 0:
         local_rect = {
-            "x": rect["x"] - monitor["left"],
-            "y": rect["y"] - monitor["top"],
-            "width": rect["width"],
-            "height": rect["height"],
+            "x": round((rect["x"] - monitor["left"]) * scale),
+            "y": round((rect["y"] - monitor["top"]) * scale),
+            "width": round(rect["width"] * scale),
+            "height": round(rect["height"] * scale),
         }
 
     monitor_info = {
@@ -39,6 +43,7 @@ def grab_for_point(x: int, y: int, rect: dict | None):
         "top": monitor["top"],
         "width": monitor["width"],
         "height": monitor["height"],
+        "scale": round(scale, 3),
     }
     return image, local_rect, monitor_info
 

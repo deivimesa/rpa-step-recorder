@@ -52,6 +52,10 @@ hiddenimports += collect_submodules('docx')
 hiddenimports += [
     'pynput.keyboard._win32',
     'pynput.mouse._win32',
+    'app.backends.windows',
+    'app.backends.win_uia',
+    'app.backends.win_hooks',
+    'app.backends.win_system',
 ]
 
 # psutil: extensión C, normalmente detectada; se asegura por si acaso.
@@ -73,7 +77,7 @@ a = Analysis(
     hookspath=[],
     hooksconfig={},
     runtime_hooks=[],
-    excludes=[],
+    excludes=['Quartz', 'AppKit', 'ApplicationServices', 'objc'],
     win_no_prefer_redirects=False,
     win_private_assemblies=False,
     cipher=block_cipher,

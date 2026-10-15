@@ -1,4 +1,4 @@
-# RPA Step Recorder — App de escritorio (Windows)
+# RPA Step Recorder — App de escritorio (Windows y macOS)
 
 Graba lo que haces en **cualquier aplicación de Windows** (no solo el
 navegador): programas instalados, ERPs, SAP GUI, utilidades del sistema, etc.
@@ -8,7 +8,7 @@ con el elemento resaltado en rojo y genera la documentación del proceso en
 
 ## Requisitos
 
-- Windows 10 u 11.
+- Windows 10 u 11, o macOS 11 o posterior (Intel o Apple Silicon).
 - Python 3.12 (solo si la ejecutas desde el código fuente).
 - O, como alternativa, el ejecutable `RPAStepRecorder.exe` (no necesita Python).
 
@@ -38,6 +38,36 @@ pip install -r requirements.txt
 | `python-docx` | Exportación a Word |
 | `fpdf2` | Exportación a PDF |
 
+## macOS
+
+```bash
+cd desktop
+python3 -m venv .venv && source .venv/bin/activate   # Python 3.12+ de python.org o uv
+pip install -r requirements.txt
+python run.py
+```
+
+> No uses el Python 3.9 que trae macOS (su Tk 8.5 está obsoleto).
+
+macOS pide tres permisos en **Ajustes del Sistema › Privacidad y seguridad**
+(el enlace «Permisos de macOS…» de la app los muestra y abre el panel):
+
+| Permiso | Para qué |
+|---|---|
+| Accesibilidad | Identificar el botón o campo pulsado |
+| Monitorización de entrada | Detectar clics y teclas en otras apps |
+| Grabación de pantalla | Capturar la pantalla (sin él solo sale el escritorio) |
+
+Si ejecutas desde Terminal, el permiso se concede a Terminal. Tras conceder
+Grabación de pantalla o Monitorización de entrada hay que reabrir la app. En
+portátiles Mac, F8/F9/F10 se pulsan con `fn` (o usa Cmd+Mayús+8/9/0).
+
+Para empaquetar: `./build_mac.sh` → `dist/RPA Step Recorder.app` y un `.dmg`.
+La firma es ad hoc: macOS pedirá los permisos de nuevo tras cada recompilación.
+
+Grabaciones en macOS: `~/Library/Application Support/RPAStepRecorder/sessions/`;
+registros en `~/Library/Logs/RPAStepRecorder/`.
+
 ## Cómo ejecutarla
 
 Desde la carpeta `desktop/`:
@@ -65,6 +95,9 @@ python run.py
 | `F9` | Iniciar / detener la grabación |
 | `F8` | Agregar nota |
 | `F10` | Pausar / reanudar |
+
+Durante la grabación funcionan en cualquier app (también `Ctrl+Mayús+9/8/0` en
+Windows y `Cmd+Mayús+9/8/0` en Mac).
 
 ## Construir el ejecutable (.exe)
 

@@ -153,8 +153,11 @@ def metadata_rows(step: dict) -> list[list[str]]:
         rows.append([label, step["value"]])
 
     if element:
+        mac = element.get("platform") == "macos"
         if element.get("automation_id"):
-            rows.append(["AutomationId", element["automation_id"]])
+            rows.append(["AXIdentifier" if mac else "AutomationId", element["automation_id"]])
+        if element.get("ax_role"):
+            rows.append(["Rol AX", element["ax_role"] + (f" / {element['ax_subrole']}" if element.get("ax_subrole") else "")])
         if element.get("class_name"):
             rows.append(["ClassName", element["class_name"]])
         if element.get("control_type"):
@@ -166,11 +169,12 @@ def metadata_rows(step: dict) -> list[list[str]]:
         if element.get("access_key"):
             rows.append(["Tecla de acceso", element["access_key"]])
         if element.get("patterns"):
-            rows.append(["Interacción (patrones)", ", ".join(element["patterns"])])
+            rows.append(["Interacción (patrones)", ", ".join(str(p) for p in element["patterns"])])
         if element.get("path"):
             rows.append(["Ruta del control", element["path"]])
     if step.get("app"):
-        rows.append(["Aplicación", step["app"]])
+        bundle = (element or {}).get("bundle_id")
+        rows.append(["Aplicación", step["app"] + (f" ({bundle})" if bundle else "")])
     if step.get("window"):
         rows.append(["Ventana", step["window"]])
 
@@ -286,6 +290,8 @@ _IDENTIFICATION_KEYS = {
     "Framework",
     "Tecla de acceso",
     "Interacción (patrones)",
+    "AXIdentifier",
+    "Rol AX",
     "Ruta del control",
 }
 
@@ -315,6 +321,13 @@ def selector_rows(step: dict) -> list[list[str]]:
         rows.append(["pywinauto", f"child_window({kwargs})"])
     if sel.get("uipath"):
         rows.append(["Selector UiPath", sel["uipath"]])
+    if sel.get("ax_xpath"):
+        rows.append(["Ruta AX (macOS)", sel["ax_xpath"]])
+    if sel.get("applescript"):
+        rows.append(["AppleScript", sel["applescript"]])
+    crit = sel.get("ax_criteria")
+    if crit:
+        rows.append(["Criterios AX", ", ".join(f"{k}={v!r}" for k, v in crit.items())])
     return rows
 
 

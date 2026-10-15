@@ -14,10 +14,10 @@ distintos:
 | | 🧩 Extensión de navegador | 🖥️ App de escritorio |
 |---|---|---|
 | **Carpeta** | [`extension/`](extension/) | [`desktop/`](desktop/) |
-| **Dónde graba** | Páginas web en Chrome / Edge | Cualquier app de Windows (ERPs, SAP GUI, escritorio, utilidades...) |
-| **Plataforma** | Windows, macOS, Linux | Solo Windows 10 / 11 |
+| **Dónde graba** | Páginas web en Chrome / Edge | Cualquier app de Windows o macOS (ERPs, SAP GUI, escritorio, utilidades...) |
+| **Plataforma** | Windows, macOS, Linux | Windows 10 / 11 y macOS 11+ |
 | **Instalación** | Cargar como extensión en modo desarrollador | Python + dependencias, o el `.exe` empaquetado |
-| **Datos técnicos** | Selector CSS, XPath, id, URL | UI Automation: `AutomationId`, `ClassName`, `ControlType`, ruta del control, selectores UiPath / pywinauto |
+| **Datos técnicos** | Selector CSS, XPath, id, URL | Windows: UI Automation (`AutomationId`, selectores UiPath / pywinauto). macOS: Accesibilidad (rol AX, AXIdentifier, ruta AX, AppleScript) |
 | **Requisitos** | Solo el navegador | Python 3.12 (o el ejecutable) |
 | **Salida** | Word y PDF | Word y PDF |
 

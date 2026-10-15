@@ -16,12 +16,17 @@ consultar las familias disponibles).
 
 from __future__ import annotations
 
+import sys
+import tkinter as tk
 import tkinter.font as tkfont
 
+IS_MAC = sys.platform == "darwin"
+
 # ── Familias tipográficas ───────────────────────────────────
-FONT_UI = "Segoe UI"
-_MONO_PREF = ("Cascadia Mono", "Consolas")
-MONO = "Consolas"  # se resuelve en runtime con resolve_mono()
+# macOS: la fuente del sistema (San Francisco) vía su nombre interno de Tk.
+FONT_UI = ".AppleSystemUIFont" if IS_MAC else "Segoe UI"
+_MONO_PREF = ("SF Mono", "Menlo") if IS_MAC else ("Cascadia Mono", "Consolas")
+MONO = "Menlo" if IS_MAC else "Consolas"  # se resuelve en runtime con resolve_mono()
 
 
 def resolve_mono() -> str:
@@ -44,29 +49,37 @@ def resolve_mono() -> str:
     return MONO
 
 
-# ── Escala tipográfica (familia, px, peso) ──────────────────
-FONT_DISPLAY        = (FONT_UI, 34, "bold")
-FONT_H1             = (FONT_UI, 20, "bold")
-FONT_H2             = (FONT_UI, 16, "bold")
-FONT_NUMERIC        = (FONT_UI, 16, "normal")
-FONT_H3             = (FONT_UI, 13, "bold")
-FONT_BODY_LG        = (FONT_UI, 13, "normal")
-FONT_BODY           = (FONT_UI, 11, "normal")
-FONT_BODY_STRONG    = (FONT_UI, 11, "bold")
-FONT_SMALL          = (FONT_UI, 10, "normal")
-FONT_SMALL_STRONG   = (FONT_UI, 10, "bold")
-FONT_CAPTION        = (FONT_UI, 9,  "normal")
-FONT_CAPTION_STRONG = (FONT_UI, 9,  "bold")
+# ── Escala tipográfica (familia, pt, peso) ──────────────────
+# En Mac con Tk 8.6 un punto es un píxel (en Windows y Tk 9, 1,33 px): se
+# compensa para que el tamaño visible sea el mismo en todos los sistemas.
+_K = 1.33 if (IS_MAC and tk.TkVersion < 9) else 1.0
+
+
+def _pt(size: int) -> int:
+    return round(size * _K)
+
+FONT_DISPLAY        = (FONT_UI, _pt(34), "bold")
+FONT_H1             = (FONT_UI, _pt(20), "bold")
+FONT_H2             = (FONT_UI, _pt(16), "bold")
+FONT_NUMERIC        = (FONT_UI, _pt(16), "normal")
+FONT_H3             = (FONT_UI, _pt(13), "bold")
+FONT_BODY_LG        = (FONT_UI, _pt(13), "normal")
+FONT_BODY           = (FONT_UI, _pt(11), "normal")
+FONT_BODY_STRONG    = (FONT_UI, _pt(11), "bold")
+FONT_SMALL          = (FONT_UI, _pt(10), "normal")
+FONT_SMALL_STRONG   = (FONT_UI, _pt(10), "bold")
+FONT_CAPTION        = (FONT_UI, _pt(9), "normal")
+FONT_CAPTION_STRONG = (FONT_UI, _pt(9), "bold")
 
 
 def mono_body():
     """Fuente monoespaciada para detalle (selectores en vista de paso)."""
-    return (MONO, 10, "normal")
+    return (MONO, _pt(10), "normal")
 
 
 def mono_small():
     """Fuente monoespaciada compacta para listas densas."""
-    return (MONO, 9, "normal")
+    return (MONO, _pt(9), "normal")
 
 
 # ── Interlínea (px) para tk.Text (spacing3 ≈ LH - size) ─────
@@ -88,3 +101,52 @@ FIELD = "#fbfbfc"
 BORDER = "#e3e4e8"
 BADGE_BG = "#eef0f2"
 REL_COLORS = {"alta": "#2e9e5b", "media": "#e0a106", "baja": "#d62d2d"}
+
+
+def bind_wheel(area, canvas) -> None:
+    """Scroll con rueda y trackpad en Windows, macOS (Tk 8.6 y 9) y Linux.
+
+    Se activa al entrar el ratón en ``area`` (incluidos sus hijos) para que
+    funcione también sobre las tarjetas, no solo sobre el fondo del canvas.
+    """
+    state = {"acc": 0.0}
+
+    def _wheel(event):
+        delta = event.delta
+        if IS_MAC and tk.TkVersion < 9:
+            units = -delta  # Tk 8.6 en Mac: líneas
+        else:
+            state["acc"] += -delta / 120.0
+            units = int(state["acc"])
+            state["acc"] -= units
+        if units:
+            canvas.yview_scroll(units, "units")
+
+    def _touchpad(event):  # Tk 9 en Mac: trackpad
+        dy = event.delta & 0xFFFF
+        if dy >= 0x8000:
+            dy -= 0x10000
+        state["acc"] += -dy / 10.0
+        units = int(state["acc"])
+        state["acc"] -= units
+        if units:
+            canvas.yview_scroll(units, "units")
+
+    def _enter(_e=None):
+        area.bind_all("<MouseWheel>", _wheel)
+        area.bind_all("<Button-4>", lambda e: canvas.yview_scroll(-1, "units"))
+        area.bind_all("<Button-5>", lambda e: canvas.yview_scroll(1, "units"))
+        try:
+            area.bind_all("<TouchpadScroll>", _touchpad)
+        except tk.TclError:
+            pass
+
+    def _leave(_e=None):
+        for seq in ("<MouseWheel>", "<Button-4>", "<Button-5>", "<TouchpadScroll>"):
+            try:
+                area.unbind_all(seq)
+            except tk.TclError:
+                pass
+
+    area.bind("<Enter>", _enter, add="+")
+    area.bind("<Leave>", _leave, add="+")

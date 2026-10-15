@@ -1,8 +1,17 @@
-# RPA Step Recorder - versión escritorio (Windows)
-uiautomation==2.0.20   # inspección del árbol de UI Automation (control type, name, AutomationId...)
-psutil==6.0.0          # nombre del ejecutable (.exe) dueño de la ventana
-pynput==1.7.7          # hooks globales de ratón y teclado
-mss==9.0.1             # captura de pantalla rápida y multi-monitor
-Pillow==10.4.0         # anotación de capturas (recuadro rojo y zoom)
-python-docx==1.1.2     # exportación a Word
-fpdf2==2.7.9           # exportación a PDF
+# RPA Step Recorder - versión escritorio (Windows y macOS)
+# Comunes
+psutil==7.2.2          # nombre del ejecutable dueño de la ventana
+mss==10.2.0            # captura de pantalla rápida y multi-monitor
+Pillow==12.3.0         # anotación de capturas (recuadro y zoom); >=11 necesario con Tk 9
+python-docx==1.2.0     # exportación a Word
+fpdf2==2.8.9           # exportación a PDF
+
+# Windows
+uiautomation==2.0.20 ; sys_platform == "win32"   # árbol de UI Automation
+pynput==1.8.1 ; sys_platform != "darwin"          # hooks globales (Windows / Linux)
+
+# macOS (Accesibilidad, event tap de Quartz, AppKit)
+pyobjc-core==12.2.2 ; sys_platform == "darwin"
+pyobjc-framework-Quartz==12.2.2 ; sys_platform == "darwin"
+pyobjc-framework-ApplicationServices==12.2.2 ; sys_platform == "darwin"
+pyobjc-framework-Cocoa==12.2.2 ; sys_platform == "darwin"

@@ -11,16 +11,20 @@ La interfaz tiene dos estados:
 
 from __future__ import annotations
 
+import logging
+import queue
 import tkinter as tk
 from datetime import datetime
 from tkinter import messagebox, ttk
 
 from PIL import Image, ImageTk
 
+from . import APP_NAME, __version__
 from . import doc_common as dc
-from . import storage
-from . import inspector
+from . import logsetup, storage
 from . import ui_theme as ut
+from .backends import get_backend
+from .settings import Settings
 from .recorder import Recorder
 from .review import ReviewWindow
 from .step_detail import StepDetail
@@ -49,11 +53,8 @@ class App(tk.Tk):
         super().__init__()
         # Ya hay raíz Tk: resolvemos la monoespaciada preferida (Cascadia/Consolas).
         ut.resolve_mono()
-        self.title("RPA Step Recorder")
-        # Registramos el título propio para que el grabador no se capture a sí
-        # mismo (respaldo de inspector.es_ventana_propia).
-        inspector.register_own_titles(["RPA Step Recorder"])
-        self.geometry("460x620")
+        self.title(APP_NAME)
+        self.geometry("460x660")
         self.minsize(420, 520)
         self.configure(bg=BG)
         # Referencias a las miniaturas para que no las recolecte el GC de Tk.
@@ -74,11 +75,22 @@ class App(tk.Tk):
         # Estado del parpadeo del punto del header (_blink): un único timer.
         self._blink_after: str | None = None
         self._blink_on = True
-        self.recorder = Recorder(on_change=self._on_change)
+        # Cola de llamadas desde otros hilos: Tk solo puede tocarse desde el
+        # hilo principal (en macOS, hacerlo desde otro hilo cuelga la app).
+        self._calls: queue.Queue = queue.Queue()
+        self._refresh_pending = False
+        self.settings = Settings()
+        self.backend = get_backend()
+        self.recorder = Recorder(on_change=self._on_change, on_hotkey=self._on_hotkey, settings=self.settings)
+        logsetup.set_fatal_callback(lambda msg: self._post(lambda: self._fatal(msg)))
+        self.report_callback_exception = self._tk_exception
+        self.protocol("WM_DELETE_WINDOW", self._on_close)
         self._setup_style()
         self._build()
         self._bind_shortcuts()
         self._refresh()
+        self._pump()
+        self._health()
 
     # ── estilo ──────────────────────────────────────────────
 
@@ -151,6 +163,17 @@ class App(tk.Tk):
 
         self._build_idle(body)
         self._build_live(body)
+
+        # Avisos persistentes (permisos de macOS, ventanas elevadas...).
+        self._warn = tk.Label(
+            self, text="", bg="#fdf3e1", fg="#8a5a00", font=ut.FONT_CAPTION, anchor="w",
+            justify="left", padx=ut.SPACE_3, pady=ut.SPACE_2, wraplength=400,
+        )
+        if self.backend.name == "macos":
+            perms = tk.Label(self, text="Permisos de macOS…", bg=BG, fg=ut.ACCENT, font=ut.FONT_CAPTION,
+                             cursor="hand2", anchor="e", padx=ut.SPACE_4)
+            perms.pack(fill="x", side="bottom")
+            perms.bind("<Button-1>", lambda e: self._show_permissions())
 
         # Mensaje de estado al pie.
         self._msg = tk.Label(self, text="", bg=BG, fg=MUTED, font=ut.FONT_CAPTION, anchor="w", padx=ut.SPACE_4)
@@ -239,9 +262,7 @@ class App(tk.Tk):
         self._live_canvas.configure(yscrollcommand=scrollbar.set)
         self._live_canvas.pack(side="left", fill="both", expand=True)
         scrollbar.pack(side="right", fill="y")
-        self._live_canvas.bind(
-            "<MouseWheel>", lambda e: self._live_canvas.yview_scroll(int(-e.delta / 120), "units")
-        )
+        ut.bind_wheel(wrap, self._live_canvas)
 
     def _bind_shortcuts(self):
         # Atajos locales de la ventana (no globales del SO).
@@ -251,12 +272,30 @@ class App(tk.Tk):
 
     # ── acciones ────────────────────────────────────────────
 
+    def _show_permissions(self):
+        perms = self.backend.permissions()
+        missing = [p for p in perms if p.granted is False]
+        lines = [f"{'✔' if p.granted else '✖'}  {p.title}: {p.description}" for p in perms]
+        if missing:
+            lines.append("\n¿Abrir Ajustes del Sistema para conceder los que faltan?\n"
+                         "(Si lanzas la app desde Terminal, el permiso se concede a Terminal. "
+                         "Tras conceder Grabación de pantalla o Monitorización de entrada, reabre la app.)")
+            if messagebox.askyesno("Permisos de macOS", "\n".join(lines)):
+                for p in missing:
+                    self.backend.request_permission(p.key)
+                self.backend.open_permission_settings(missing[0].key)
+        else:
+            messagebox.showinfo("Permisos de macOS", "\n".join(lines))
+
     def _start(self):
         self.recorder.start_session(
             self._name.get().strip(), self._author.get().strip(), self._system.get().strip()
         )
         self._name.delete(0, "end")
-        self._say("Grabando. Cada clic crea un paso. (F10 pausar · F9 detener)", kind="ok")
+        if self.recorder.last_error:
+            self._say(self.recorder.last_error, kind="warn")
+        else:
+            self._say("Grabando. Cada clic crea un paso. (F10 pausar · F9 detener)", kind="ok")
 
     def _toggle_record(self):
         """F9: inicia si está en reposo, detiene si está grabando."""
@@ -276,7 +315,12 @@ class App(tk.Tk):
 
     def _add_note(self):
         if self.recorder.recording and not self.recorder.paused:
-            self.recorder.note()
+            from tkinter import simpledialog
+
+            text = simpledialog.askstring("Agregar nota", "Texto de la nota:", parent=self)
+            if text is None:
+                return
+            self.recorder.note(text.strip() or "Nota")
             self._say("Nota añadida.", kind="ok")
 
     def _undo_last(self):
@@ -360,9 +404,71 @@ class App(tk.Tk):
 
     # ── pintado ─────────────────────────────────────────────
 
+    def _post(self, fn):
+        """Encola una llamada para el hilo de Tk (seguro desde cualquier hilo)."""
+        self._calls.put(fn)
+
+    def _pump(self):
+        while True:
+            try:
+                fn = self._calls.get_nowait()
+            except queue.Empty:
+                break
+            try:
+                fn()
+            except Exception:
+                logging.getLogger("rpa.ui").exception("fallo en una llamada diferida")
+        self.after(40, self._pump)
+
     def _on_change(self):
-        # Recorder llama a on_change desde su hilo worker: volvemos al hilo de Tk.
-        self.after(0, self._refresh)
+        # Llega desde el worker: se agrupan los repintados en uno solo.
+        if not self._refresh_pending:
+            self._refresh_pending = True
+
+            def run():
+                self._refresh_pending = False
+                self._refresh()
+
+            self._post(run)
+
+    def _on_hotkey(self, action):
+        # F8/F9/F10 pulsadas en cualquier app mientras se graba (hilo del hook).
+        handlers = {"toggle_record": self._stop, "toggle_pause": self._toggle_pause, "add_note": self._add_note}
+        if action in handlers:
+            self._post(handlers[action])
+
+    def _health(self):
+        """Cada 3 s: hooks vivos y avisos del entorno (permisos, ventanas elevadas)."""
+        try:
+            warnings = []
+            if self.recorder.recording and not self.recorder.hooks_alive():
+                warnings.append(self.recorder.last_error or "La escucha de ratón y teclado se detuvo.")
+            warnings += self.backend.environment_warnings()
+            self._warn.config(text="\n".join(warnings))
+            if warnings:
+                self._warn.pack(fill="x", padx=ut.SPACE_4, pady=(0, ut.SPACE_2), before=self._msg)
+            else:
+                self._warn.pack_forget()
+        except Exception:
+            logging.getLogger("rpa.ui").exception("fallo en la comprobación de salud")
+        self.after(3000, self._health)
+
+    def _tk_exception(self, exc, val, tb):
+        logging.getLogger("rpa.ui").error("error en la interfaz", exc_info=(exc, val, tb))
+        self._fatal(f"{exc.__name__}: {val}")
+
+    def _fatal(self, msg):
+        messagebox.showerror(
+            "Error inesperado",
+            f"{msg}\n\nLa grabación en curso se conserva. Detalles en:\n{logsetup.log_file()}",
+        )
+
+    def _on_close(self):
+        if self.recorder.recording:
+            if not messagebox.askyesno("Salir", "Hay una grabación en curso. ¿Detenerla y salir?"):
+                return
+            self.recorder.stop_session()
+        self.destroy()
 
     def _set_pill(self, recording: bool, paused: bool):
         if recording and paused:
@@ -671,14 +777,14 @@ class App(tk.Tk):
     def _render_recent(self):
         for child in self._recent.winfo_children():
             child.destroy()
-        sessions = [s for s in storage.list_sessions() if s.get("steps")]
+        sessions = [s for s in storage.list_sessions() if s.get("step_count")]
         if not sessions:
             self._render_empty_state()
             return
         for item in sessions[:10]:
             row = ttk.Frame(self._recent)
             row.pack(fill="x", pady=2)
-            n = len(item["steps"])
+            n = item["step_count"]
             label = f"{item['name']}   ·   {n} paso" + ("" if n == 1 else "s")
             # El nombre es el botón que abre la revisión (se elimina el botón
             # "Revisar" redundante que hacía exactamente lo mismo).
@@ -730,7 +836,10 @@ class App(tk.Tk):
 
     def _delete(self, item):
         if messagebox.askyesno("Borrar grabación", f"¿Borrar «{item['name']}» y sus capturas?"):
-            storage.delete_session(item["id"])
+            try:
+                storage.delete_session(item["id"])
+            except storage.StorageError as err:
+                messagebox.showerror("Borrar grabación", str(err))
             self._refresh()
 
     def _tick(self):
@@ -747,8 +856,45 @@ class App(tk.Tk):
 
 
 def run():
+    logsetup.ensure_std_streams()
+    logsetup.setup_logging()
+    logsetup.install_crash_hooks()
+    lock = _single_instance()
+    if lock is None:
+        return
+    get_backend().prepare_process()
     app = App()
     app.mainloop()
+
+
+def _single_instance():
+    """Impide dos grabadores a la vez (duplicarían cada paso). El SO libera el
+    bloqueo solo aunque la app se cierre de golpe."""
+    from . import paths
+
+    handle = open(paths.lock_path(), "a+")
+    try:
+        if paths.IS_WINDOWS:
+            import msvcrt
+
+            msvcrt.locking(handle.fileno(), msvcrt.LK_NBLCK, 1)
+        else:
+            import fcntl
+
+            fcntl.flock(handle.fileno(), fcntl.LOCK_EX | fcntl.LOCK_NB)
+        return handle
+    except OSError:
+        handle.close()
+        if paths.IS_WINDOWS:
+            from .backends import win_system
+
+            if win_system.bring_to_front(APP_NAME):
+                return None
+        root = tk.Tk()
+        root.withdraw()
+        messagebox.showinfo(APP_NAME, "RPA Step Recorder ya está abierto.")
+        root.destroy()
+        return None
 
 
 if __name__ == "__main__":

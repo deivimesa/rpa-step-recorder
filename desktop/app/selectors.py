@@ -42,7 +42,7 @@ def _segment_xpath(node: dict) -> str:
         return f"{control_type}[@AutomationId='{_xml_escape(automation_id)}']"
     if name:
         return f"{control_type}[@Name='{_xml_escape(name)}']"
-    return f"{control_type}[{index}]"
+    return f"{control_type}[{index}]" if node.get("index") else control_type
 
 
 def _uia_xpath(element: dict) -> str:
@@ -61,6 +61,8 @@ def _uia_xpath(element: dict) -> str:
         if not control_type:
             continue
         # La ventana top-level se identifica mejor por ClassName si lo hay.
+        if node.get("gap_before"):
+            segments.append("")  # "//" : la ruta se salta niveles intermedios
         if control_type == "Window" and node.get("class_name"):
             segments.append(
                 f"Window[@ClassName='{_xml_escape(node['class_name'])}']"
@@ -146,8 +148,8 @@ def _uipath(element: dict) -> str:
     return f"<wnd{wnd} /><uia{uia} />"
 
 
-def build_selectors(element: dict) -> dict:
-    """Devuelve los tres selectores (uia_xpath, pywinauto, uipath).
+def build_windows_selectors(element: dict) -> dict:
+    """Devuelve los tres selectores de Windows (uia_xpath, pywinauto, uipath).
 
     Degrada con elegancia ante datos ausentes y nunca lanza por un `element`
     incompleto; si `element` es falsy, trabaja sobre un dict vacío.
@@ -158,3 +160,80 @@ def build_selectors(element: dict) -> dict:
         "pywinauto": _pywinauto(element),
         "uipath": _uipath(element),
     }
+
+
+# ── macOS ───────────────────────────────────────────────────
+
+# Rol AX -> clase de elemento de System Events (AppleScript).
+_AS_CLASS = {
+    "AXWindow": "window", "AXSheet": "sheet", "AXDrawer": "drawer", "AXButton": "button",
+    "AXCheckBox": "checkbox", "AXRadioButton": "radio button", "AXPopUpButton": "pop up button",
+    "AXMenuButton": "menu button", "AXComboBox": "combo box", "AXTextField": "text field",
+    "AXTextArea": "text area", "AXStaticText": "static text", "AXImage": "image", "AXGroup": "group",
+    "AXScrollArea": "scroll area", "AXSplitGroup": "splitter group", "AXToolbar": "toolbar",
+    "AXTabGroup": "tab group", "AXTable": "table", "AXOutline": "outline", "AXList": "list",
+    "AXRow": "row", "AXColumn": "column", "AXSlider": "slider", "AXIncrementor": "incrementor",
+    "AXMenuBar": "menu bar", "AXMenuBarItem": "menu bar item", "AXMenu": "menu",
+    "AXMenuItem": "menu item", "AXRadioGroup": "radio group", "AXProgressIndicator": "progress indicator",
+}
+
+
+def _as_quote(text: str) -> str:
+    return '"' + str(text).replace("\\", "\\\\").replace('"', '\\"') + '"'
+
+
+def _ax_xpath(element: dict) -> str:
+    app = element.get("app") or ""
+    segments = [f"AXApplication[@AXTitle='{_xml_escape(app)}']"] if app else ["AXApplication"]
+    for node in element.get("ancestors") or []:
+        role = node.get("role") or "AXUnknown"
+        if node.get("gap_before"):
+            segments.append("")
+        if node.get("automation_id"):
+            segments.append(f"{role}[@AXIdentifier='{_xml_escape(node['automation_id'])}']")
+        elif node.get("name"):
+            segments.append(f"{role}[@AXTitle='{_xml_escape(node['name'])}']")
+        elif node.get("index"):
+            segments.append(f"{role}[{node['index']}]")
+        else:
+            segments.append(role)
+    return "/" + "/".join(segments)
+
+
+def _applescript(element: dict) -> str:
+    parts = []
+    for node in reversed(element.get("ancestors") or []):
+        cls = _AS_CLASS.get(node.get("role") or "")
+        title = node.get("title") or ""
+        if cls and title:
+            parts.append(f"{cls} {_as_quote(title)}")
+        elif cls and node.get("index"):
+            parts.append(f"{cls} {node['index']}")
+        elif node.get("child_index"):
+            parts.append(f"UI element {node['child_index']}")
+        else:
+            return ""  # sin forma fiable de referenciarlo
+    if not parts:
+        return ""
+    bundle = element.get("bundle_id") or ""
+    target = (f"(first application process whose bundle identifier is {_as_quote(bundle)})"
+              if bundle else f"process {_as_quote(element.get('app') or '')}")
+    return f'tell application "System Events" to tell {target} to click ' + " of ".join(parts)
+
+
+def build_mac_selectors(element: dict) -> dict:
+    element = element or {}
+    criteria = {k: v for k, v in (
+        ("bundle_id", element.get("bundle_id")), ("AXRole", element.get("ax_role")),
+        ("AXSubrole", element.get("ax_subrole")), ("AXIdentifier", element.get("automation_id")),
+        ("AXTitle", element.get("name")),
+    ) if v}
+    return {"ax_xpath": _ax_xpath(element), "applescript": _applescript(element), "ax_criteria": criteria}
+
+
+def build_selectors(element: dict) -> dict:
+    """Selectores adecuados a la plataforma del elemento."""
+    element = element or {}
+    if element.get("platform") == "macos":
+        return build_mac_selectors(element)
+    return build_windows_selectors(element)
