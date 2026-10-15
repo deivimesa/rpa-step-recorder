@@ -6,11 +6,11 @@
   "permissions": ["tabs", "storage", "unlimitedStorage", "activeTab"],
   "host_permissions": ["<all_urls>"],
   "background": {
-    "service_worker": "background.js",
+    "service_worker": "src/background/background.js",
     "type": "module"
   },
   "action": {
-    "default_popup": "popup.html",
+    "default_popup": "src/popup/popup.html",
     "default_title": "RPA Step Recorder",
     "default_icon": {
       "16": "icons/icon16.png",
@@ -28,14 +28,14 @@
   "content_scripts": [
     {
       "matches": ["<all_urls>"],
-      "js": ["content.js"],
+      "js": ["src/content/content.js"],
       "run_at": "document_start",
       "all_frames": true
     }
   ],
   "web_accessible_resources": [
     {
-      "resources": ["overlay.css", "tokens.css"],
+      "resources": ["src/content/overlay.css", "src/styles/tokens.css"],
       "matches": ["<all_urls>"]
     }
   ],

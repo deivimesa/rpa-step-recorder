@@ -16,7 +16,7 @@ distintos:
 | **Carpeta** | [`extension/`](extension/) | [`desktop/`](desktop/) |
 | **Dónde graba** | Páginas web en Chrome / Edge | Cualquier app de Windows o macOS (ERPs, SAP GUI, escritorio, utilidades...) |
 | **Plataforma** | Windows, macOS, Linux | Windows 10 / 11 y macOS 11+ |
-| **Instalación** | Cargar como extensión en modo desarrollador | Python + dependencias, o el `.exe` empaquetado |
+| **Instalación** | Cargar como extensión en modo desarrollador | Python + dependencias, o el `.exe` de [`desktop/releases/`](desktop/releases/) |
 | **Datos técnicos** | Selector CSS, XPath, id, URL | Windows: UI Automation (`AutomationId`, selectores UiPath / pywinauto). macOS: Accesibilidad (rol AX, AXIdentifier, ruta AX, AppleScript) |
 | **Requisitos** | Solo el navegador | Python 3.12 (o el ejecutable) |
 | **Salida** | Word y PDF | Word y PDF |
@@ -26,39 +26,58 @@ distintos:
 - **Documentas procesos web** (aplicaciones en el navegador, portales, SaaS):
   usa la **extensión**. No instala nada, funciona en cualquier sistema
   operativo y captura el DOM (CSS/XPath).
-- **Documentas aplicaciones de escritorio Windows** (ERP instalado, SAP GUI,
+- **Documentas aplicaciones de escritorio** (ERP instalado, SAP GUI,
   programas nativos, utilidades del sistema): usa la **app de escritorio**.
-  Inspecciona el árbol de UI Automation, que es lo que necesitan los bots de
-  RPA de escritorio (UiPath, Power Automate, pywinauto).
+  Inspecciona el árbol de UI Automation (Windows) o de Accesibilidad (macOS),
+  que es lo que necesitan los bots de RPA de escritorio (UiPath, Power
+  Automate, pywinauto).
 
 ## Estructura del repositorio
 
 ```
 rpa-step-recorder/
-├── extension/        Extensión Chrome / Edge (Manifest V3)
-│   ├── manifest.json
-│   ├── background.js, content.js, popup.*, review.*
-│   ├── lib/          Librerías de generación de documentos (docx, pdf, zip...)
-│   ├── icons/        Iconos de la extensión (16/32/48/128 px)
-│   └── README.md     → Guía de instalación y uso de la extensión
+├── extension/                 🧩 Extensión Chrome / Edge (Manifest V3)
+│   ├── manifest.json          La carpeta extension/ es la que se carga en el navegador
+│   ├── icons/                 Iconos 16/32/48/128 px
+│   ├── src/
+│   │   ├── background/        Service worker: capturas, pasos e IndexedDB
+│   │   ├── content/           Script inyectado en las páginas + tarjeta del paso
+│   │   ├── popup/             Panel del icono de la barra
+│   │   ├── review/            Página «Revisar y exportar»
+│   │   ├── lib/               Word, PDF, ZIP, anotación de capturas e IndexedDB
+│   │   └── styles/            Tokens de diseño compartidos
+│   ├── README.md              Instalación y uso
+│   └── LEEME.txt              Guía para el usuario final (texto plano)
 │
-├── desktop/          App de escritorio Python / Tkinter (Windows)
-│   ├── run.py        Punto de entrada: python run.py
+├── desktop/                   🖥️ App de escritorio Python / Tkinter (Windows y macOS)
+│   ├── run.py                 Punto de entrada: python run.py
 │   ├── requirements.txt
-│   ├── app/          Paquete principal (recorder, inspector, exporters...)
-│   ├── rpa-step-recorder.spec   Receta de empaquetado PyInstaller
-│   ├── build_exe.ps1            Script de build del .exe
-│   └── README.md     → Instalación, uso y cómo construir el .exe
+│   ├── app/                   Código fuente
+│   │   ├── main.py            Arranque: registro, instancia única y ventana
+│   │   ├── core/              Grabación, capturas, sesiones, ajustes y rutas
+│   │   ├── ui/                Ventanas: panel, revisión, detalle y tema
+│   │   ├── backends/          Integración con el sistema operativo
+│   │   │   ├── windows/       UI Automation, hooks y Win32
+│   │   │   └── macos/         Accesibilidad (AX) y event tap de Quartz
+│   │   ├── exporters/         Documentos Word y PDF
+│   │   └── assets/fonts/      Fuentes del PDF
+│   ├── packaging/             Empaquetado con PyInstaller
+│   │   ├── windows/           build_exe.ps1 + .spec → RPAStepRecorder.exe
+│   │   └── macos/             build_mac.sh + .spec → RPA Step Recorder.app / .dmg
+│   ├── releases/windows/      RPAStepRecorder.exe listo para usar
+│   ├── README.md              Instalación, uso y empaquetado
+│   └── CHANGELOG.md
 │
-├── README.md         (este archivo)
-├── LICENSE           Licencia MIT
+├── README.md                  (este archivo)
+├── LICENSE                    Licencia MIT
 └── .gitignore
 ```
 
 ## Documentación por versión
 
 - 🧩 **Extensión de navegador** → [`extension/README.md`](extension/README.md)
-- 🖥️ **App de escritorio Windows** → [`desktop/README.md`](desktop/README.md)
+- 🖥️ **App de escritorio (Windows y macOS)** → [`desktop/README.md`](desktop/README.md)
+- 📦 **Ejecutable de Windows** → [`desktop/releases/`](desktop/releases/)
 
 ## Privacidad
 

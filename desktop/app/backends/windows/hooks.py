@@ -20,7 +20,7 @@ import ctypes
 import logging
 import time
 
-from ..keys import KeyEvent, MouseEvent
+from ...core.keys import KeyEvent, MouseEvent
 
 log = logging.getLogger("rpa.hooks")
 

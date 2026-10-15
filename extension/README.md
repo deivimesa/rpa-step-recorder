@@ -37,6 +37,9 @@ compilarse ni empaquetarse.
 > El navegador avisa de las extensiones en modo desarrollador. Es normal con
 > las extensiones cargadas a mano; puedes cerrar el aviso y seguir usándola.
 
+> **¿Actualizaste el repositorio?** Pulsa el botón de recargar (↻) de la
+> extensión en `chrome://extensions` para que el navegador lea los cambios.
+
 ## Cómo usarla
 
 1. Pulsa el icono, escribe el nombre del proceso y pulsa **"Iniciar grabación"**.
@@ -100,6 +103,23 @@ página de revisión y repítelo.
 Tu empresa lo tiene bloqueado por política de Chrome. Habla con tu área de
 sistemas: la alternativa es publicarla en la Chrome Web Store como extensión no
 listada.
+
+## Estructura
+
+```
+extension/
+├── manifest.json     Manifest V3 (esta carpeta es la que se carga)
+├── icons/            Iconos 16/32/48/128 px
+└── src/
+    ├── background/   Service worker: captura, anota y guarda cada paso
+    ├── content/      Content script (detecta el clic) y estilos de la tarjeta
+    ├── popup/        Panel del icono: iniciar, pausar y detener
+    ├── review/       Página de revisión y exportación
+    ├── lib/          docx.js, pdf.js, zip.js, annotate.js, db.js, doc-common.js
+    └── styles/       tokens.css: colores y tipografía compartidos
+```
+
+No hay paso de compilación: el navegador carga los archivos tal cual.
 
 ## ¿Y para aplicaciones de escritorio?
 

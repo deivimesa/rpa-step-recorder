@@ -6,8 +6,8 @@ import logging
 import os
 from typing import Any
 
-from . import win_system
-from .base import Backend, HookError, Permission
+from . import system as win_system
+from ..base import Backend, HookError, Permission
 
 log = logging.getLogger("rpa.windows")
 
@@ -15,7 +15,7 @@ log = logging.getLogger("rpa.windows")
 # uiautomation (que, al importarse, fija su propio modo).
 _DPI_MODE = win_system.set_dpi_awareness()
 
-from . import win_uia  # noqa: E402  (tras fijar el DPI)
+from . import uia as win_uia  # noqa: E402  (tras fijar el DPI)
 
 
 class WindowsBackend(Backend):
@@ -84,13 +84,13 @@ class WindowsBackend(Backend):
         return pid == os.getpid()
 
     def build_selectors(self, element: dict | None) -> dict:
-        from ..selectors import build_windows_selectors
+        from ...core.selectors import build_windows_selectors
 
         return build_windows_selectors(element or {})
 
     # ── entrada ──
     def start_hooks(self, on_mouse, on_key) -> None:
-        from .win_hooks import WinHooks
+        from .hooks import WinHooks
 
         self.stop_hooks()
         try:

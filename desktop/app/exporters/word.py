@@ -19,8 +19,8 @@ from docx.oxml.ns import qn
 from docx.oxml import OxmlElement
 from docx.shared import Inches, Pt, RGBColor
 
-from .. import doc_common as dc
-from .. import storage
+from . import doc_common as dc
+from ..core import storage
 
 
 # ── constantes tipográficas y de color (sin números mágicos dispersos) ──

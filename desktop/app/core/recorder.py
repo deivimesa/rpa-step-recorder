@@ -31,7 +31,7 @@ import time
 from datetime import datetime
 
 from . import annotate, capture, keys, phrases, storage
-from .backends import HookError, get_backend
+from ..backends import HookError, get_backend
 
 log = logging.getLogger("rpa.recorder")
 

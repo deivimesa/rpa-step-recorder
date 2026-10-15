@@ -16,14 +16,14 @@ from tkinter import filedialog, messagebox, ttk
 
 from PIL import Image, ImageTk
 
-from . import doc_common as dc
-from . import storage
-from .backends import get_backend
-from . import ui_theme as ut
-from .exporters import pdf as pdf_exporter
-from .exporters import word as word_exporter
+from ..exporters import doc_common as dc
+from ..core import storage
+from ..backends import get_backend
+from . import theme as ut
+from ..exporters import pdf as pdf_exporter
+from ..exporters import word as word_exporter
 
-# ── Paleta y tokens (centralizados en ui_theme) ─────────────
+# ── Paleta y tokens (centralizados en theme.py) ─────────────
 ACCENT = ut.ACCENT
 INK = ut.INK
 MUTED = ut.MUTED

@@ -4,7 +4,7 @@ Punto único de verdad del diseño de la interfaz de escritorio: familias,
 escala tipográfica (familia, tamaño en px, peso), interlineados para los
 widgets ``tk.Text``, escala de espaciado (base 4) y la paleta de color.
 
-Las ventanas (``main.py``, ``review.py``, ``step_detail.py``) importan estos
+Las ventanas (``main_window.py``, ``review.py``, ``step_detail.py``) importan estos
 tokens en lugar de repetir tuplas de fuente y colores sueltos. Así un cambio
 de marca o de jerarquía tipográfica se hace en un solo sitio.
 

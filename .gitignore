@@ -25,7 +25,8 @@ htmlcov/
 .eggs/
 
 # --- PyInstaller / empaquetado --------------------------------------------
-# Los binarios NO se versionan: se publican como Release en GitHub.
+# Salidas del build: no se versionan. El ejecutable de Windows listo para usar
+# se versiona aparte en desktop/releases/windows/ (lo copia build_exe.ps1).
 
 desktop/build/
 desktop/dist/
@@ -35,8 +36,10 @@ desktop/dist/
 # No lo ignoramos. Si generas .spec temporales, nómbralos *.tmp.spec.
 *.tmp.spec
 
-# .ico generado automáticamente desde los PNG durante el build
-desktop/RPAStepRecorder.ico
+# Iconos generados durante el build (ahora en desktop/build/; los scripts
+# anteriores los dejaban en desktop/)
+desktop/*.ico
+desktop/*.icns
 
 # --- Logs y temporales -----------------------------------------------------
 *.log
@@ -70,7 +73,5 @@ $RECYCLE.BIN/
 #   extension/icons/*.png   -> iconos de la extensión
 #   desktop/**/*.py         -> código fuente
 #   *.spec                  -> receta de empaquetado
+#   desktop/releases/       -> ejecutables listos para usar
 # ---------------------------------------------------------------------------
-
-# macOS build
-desktop/RPAStepRecorder.icns

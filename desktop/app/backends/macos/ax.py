@@ -45,7 +45,7 @@ from ApplicationServices import (
     kAXValueCGSizeType,
 )
 
-from .base import compute_reliability, secret_hint
+from ..base import compute_reliability, secret_hint
 
 log = logging.getLogger("rpa.ax")
 

@@ -4,9 +4,9 @@
  * No necesita ningún servidor ni conexión a internet.
  */
 
-import { annotate } from "./lib/annotate.js";
-import * as db from "./lib/db.js";
-import { domainOf } from "./lib/doc-common.js";
+import { annotate } from "../lib/annotate.js";
+import * as db from "../lib/db.js";
+import { domainOf } from "../lib/doc-common.js";
 
 const state = {
   sessionId: null,
@@ -274,7 +274,7 @@ const HANDLERS = {
     notifyPopup();
   },
   OPEN_REVIEW: async (m) => {
-    const url = chrome.runtime.getURL("review.html") + (m.sessionId ? `?id=${m.sessionId}` : "");
+    const url = chrome.runtime.getURL("src/review/review.html") + (m.sessionId ? `?id=${m.sessionId}` : "");
     await chrome.tabs.create({ url });
   },
 };

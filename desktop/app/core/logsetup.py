@@ -19,7 +19,8 @@ import threading
 from logging.handlers import RotatingFileHandler
 from pathlib import Path
 
-from . import __version__, paths
+from .. import __version__
+from . import paths
 
 log = logging.getLogger("rpa")
 

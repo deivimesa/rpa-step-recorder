@@ -11,8 +11,8 @@ from typing import Any
 import Quartz
 from ApplicationServices import AXIsProcessTrusted, AXIsProcessTrustedWithOptions, kAXTrustedCheckOptionPrompt
 
-from . import mac_ax
-from .base import Backend, HookError, Permission
+from . import ax as mac_ax
+from ..base import Backend, HookError, Permission
 
 log = logging.getLogger("rpa.macos")
 
@@ -85,13 +85,13 @@ class MacBackend(Backend):
         return mac_ax.pid_of(element) == os.getpid()
 
     def build_selectors(self, element) -> dict:
-        from ..selectors import build_mac_selectors
+        from ...core.selectors import build_mac_selectors
 
         return build_mac_selectors(element or {})
 
     # ── entrada ──
     def start_hooks(self, on_mouse, on_key) -> None:
-        from .mac_hooks import MacHooks
+        from .hooks import MacHooks
 
         self.stop_hooks()
         self._hooks = MacHooks(on_mouse, on_key)

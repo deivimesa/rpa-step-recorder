@@ -6,21 +6,23 @@
 .DESCRIPTION
     - Verifica/instala PyInstaller.
     - Genera un icono .ico desde extension/icons/icon128.png (si Pillow existe).
-    - Ejecuta pyinstaller con rpa-step-recorder.spec.
-    - Deja el binario en desktop/dist/RPAStepRecorder.exe.
+    - Ejecuta pyinstaller con packaging/windows/rpa-step-recorder.spec.
+    - Deja el binario en desktop/dist/RPAStepRecorder.exe y lo copia a
+      desktop/releases/windows/RPAStepRecorder.exe (la copia versionada).
 
-    Ejecutar desde la carpeta desktop/:
-        .\build_exe.ps1
+    Se puede ejecutar desde cualquier carpeta; por ejemplo, desde desktop/:
+        .\packaging\windows\build_exe.ps1
 
     Los artefactos (build/, dist/, *.ico generado) estan en .gitignore y NO se
-    versionan: el binario se publica como Release en GitHub.
+    versionan. El ejecutable listo para usar vive en releases/windows/.
 #>
 
 $ErrorActionPreference = 'Stop'
 
-# Situarse en la carpeta del script (desktop/).
+# Situarse en la carpeta desktop/ (dos niveles por encima de este script).
 $ScriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
-Set-Location $ScriptDir
+$DesktopDir = (Resolve-Path (Join-Path $ScriptDir '..\..')).Path
+Set-Location $DesktopDir
 
 Write-Host '==> RPA Step Recorder - build del ejecutable' -ForegroundColor Cyan
 
@@ -35,8 +37,10 @@ if (-not $pyi) {
 }
 
 # 2. Generar icono .ico desde el PNG de la extension -------------------------
-$IconPng = Join-Path $ScriptDir '..\extension\icons\icon128.png'
-$IconIco = Join-Path $ScriptDir 'RPAStepRecorder.ico'
+$IconPng = Join-Path $DesktopDir '..\extension\icons\icon128.png'
+$BuildDir = Join-Path $DesktopDir 'build'
+New-Item -ItemType Directory -Force -Path $BuildDir | Out-Null
+$IconIco = Join-Path $BuildDir 'RPAStepRecorder.ico'
 if (Test-Path $IconPng) {
     Write-Host '--> Generando icono .ico desde icon128.png...'
     $gen = @"
@@ -57,14 +61,19 @@ except Exception as e:
 
 # 3. Build --------------------------------------------------------------------
 Write-Host '--> Ejecutando PyInstaller...' -ForegroundColor Cyan
-python -m PyInstaller --noconfirm rpa-step-recorder.spec
+python -m PyInstaller --noconfirm packaging\windows\rpa-step-recorder.spec
 
 # 4. Resultado ----------------------------------------------------------------
-$Exe = Join-Path $ScriptDir 'dist\RPAStepRecorder.exe'
+$Exe = Join-Path $DesktopDir 'dist\RPAStepRecorder.exe'
 if (Test-Path $Exe) {
     $sizeMB = [math]::Round((Get-Item $Exe).Length / 1MB, 1)
+    # Copia versionada en git: desktop/releases/windows/RPAStepRecorder.exe
+    $ReleaseDir = Join-Path $DesktopDir 'releases\windows'
+    New-Item -ItemType Directory -Force -Path $ReleaseDir | Out-Null
+    Copy-Item -Path $Exe -Destination (Join-Path $ReleaseDir 'RPAStepRecorder.exe') -Force
     Write-Host ''
     Write-Host "==> OK: $Exe ($sizeMB MB)" -ForegroundColor Green
+    Write-Host '    Copiado a releases\windows\RPAStepRecorder.exe' -ForegroundColor Green
 } else {
     Write-Host '==> ERROR: no se genero el ejecutable.' -ForegroundColor Red
     exit 1

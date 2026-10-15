@@ -5,7 +5,7 @@ from __future__ import annotations
 import logging
 import time
 
-from ..keys import KeyEvent, MouseEvent
+from ..core.keys import KeyEvent, MouseEvent
 from .base import Backend, HookError
 
 log = logging.getLogger("rpa.generic")

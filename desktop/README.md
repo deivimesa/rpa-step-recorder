@@ -10,7 +10,8 @@ con el elemento resaltado en rojo y genera la documentación del proceso en
 
 - Windows 10 u 11, o macOS 11 o posterior (Intel o Apple Silicon).
 - Python 3.12 (solo si la ejecutas desde el código fuente).
-- O, como alternativa, el ejecutable `RPAStepRecorder.exe` (no necesita Python).
+- O, como alternativa, el ejecutable de Windows
+  [`releases/windows/RPAStepRecorder.exe`](releases/) (no necesita Python).
 
 ## Instalación (desde el código fuente)
 
@@ -62,7 +63,8 @@ Si ejecutas desde Terminal, el permiso se concede a Terminal. Tras conceder
 Grabación de pantalla o Monitorización de entrada hay que reabrir la app. En
 portátiles Mac, F8/F9/F10 se pulsan con `fn` (o usa Cmd+Mayús+8/9/0).
 
-Para empaquetar: `./build_mac.sh` → `dist/RPA Step Recorder.app` y un `.dmg`.
+Para empaquetar: `./packaging/macos/build_mac.sh` → `dist/RPA Step Recorder.app` y
+un `.dmg`.
 La firma es ad hoc: macOS pedirá los permisos de nuevo tras cada recompilación.
 
 Grabaciones en macOS: `~/Library/Application Support/RPAStepRecorder/sessions/`;
@@ -101,7 +103,8 @@ Windows y `Cmd+Mayús+9/8/0` en Mac).
 
 ## Construir el ejecutable (.exe)
 
-El empaquetado usa **PyInstaller** con la receta `rpa-step-recorder.spec`.
+El empaquetado usa **PyInstaller** con la receta
+`packaging/windows/rpa-step-recorder.spec`.
 Produce un único archivo `RPAStepRecorder.exe` sin consola (modo *windowed*).
 
 ### Opción A — Script automático (recomendado)
@@ -109,21 +112,22 @@ Produce un único archivo `RPAStepRecorder.exe` sin consola (modo *windowed*).
 Desde la carpeta `desktop/`:
 
 ```powershell
-.\build_exe.ps1
+.\packaging\windows\build_exe.ps1
 ```
 
 El script:
 1. Verifica que PyInstaller esté instalado (lo instala si falta).
 2. Genera un icono `.ico` a partir de `extension/icons/icon128.png` (si Pillow
    está disponible).
-3. Ejecuta `pyinstaller rpa-step-recorder.spec`.
-4. Deja el ejecutable en `desktop/dist/RPAStepRecorder.exe`.
+3. Ejecuta `pyinstaller packaging/windows/rpa-step-recorder.spec`.
+4. Deja el ejecutable en `desktop/dist/RPAStepRecorder.exe` y lo copia a
+   `desktop/releases/windows/RPAStepRecorder.exe` (la copia que se sube a git).
 
 ### Opción B — Manual
 
 ```powershell
 pip install pyinstaller
-pyinstaller rpa-step-recorder.spec
+pyinstaller packaging/windows/rpa-step-recorder.spec
 ```
 
 El `.spec` incluye explícitamente los submódulos dinámicos y datos que estas
@@ -131,7 +135,8 @@ librerías necesitan para funcionar empaquetadas: `uiautomation`, `comtypes`,
 `pynput`, `mss`, `PIL`, `python-docx` (plantillas `.docx`), `fpdf` y `psutil`.
 
 > **Nota:** los artefactos de build (`build/` y `dist/`) están en `.gitignore`
-> y **no se versionan**. El binario se publica como *Release* en GitHub.
+> y **no se versionan**. El ejecutable listo para usar que sí se versiona está
+> en [`releases/windows/`](releases/).
 
 ## Dónde se guardan las grabaciones
 
@@ -168,6 +173,44 @@ los identificadores de UI Automation (AutomationId, ClassName, ControlType y la
 ruta del control), que es lo que necesita un bot de RPA de escritorio (UiPath,
 Power Automate, pywinauto) para localizar el elemento. Para documentar procesos
 **web**, usa la [extensión de navegador](../extension/README.md).
+
+## Estructura del código
+
+```
+desktop/
+├── run.py                  Punto de entrada (python run.py)
+├── requirements.txt
+├── app/
+│   ├── __init__.py         Versión y nombre de la app
+│   ├── main.py             Arranque: registro, instancia única y ventana principal
+│   ├── core/               Lógica sin interfaz
+│   │   ├── recorder.py     Grabador: hooks → pasos (un único hilo worker)
+│   │   ├── capture.py      Captura de pantalla (mss)
+│   │   ├── annotate.py     Recuadro rojo y recorte ampliado (Pillow)
+│   │   ├── keys.py         Eventos de teclado/ratón, atajos y texto tecleado
+│   │   ├── phrases.py      Descripciones automáticas de los pasos
+│   │   ├── selectors.py    Selectores RPA (UiPath, pywinauto, AppleScript...)
+│   │   ├── storage.py      Sesiones en disco (session.json + PNG), .zip
+│   │   ├── settings.py     Preferencias (settings.json)
+│   │   ├── paths.py        Carpetas de datos y registros según el SO
+│   │   └── logsetup.py     Registro rotativo y captura de errores
+│   ├── ui/                 Ventanas Tkinter
+│   │   ├── main_window.py  Panel de control de la grabación
+│   │   ├── review.py       Revisar, reordenar y exportar
+│   │   ├── step_detail.py  Detalle de un paso
+│   │   └── theme.py        Colores, tipografía y espaciado
+│   ├── backends/           Integración con el sistema operativo
+│   │   ├── base.py         Interfaz común y cálculo de fiabilidad
+│   │   ├── generic.py      Respaldo sin inspección (otros SO)
+│   │   ├── windows/        backend.py, uia.py (UI Automation), hooks.py, system.py (Win32)
+│   │   └── macos/          backend.py, ax.py (Accesibilidad), hooks.py (event tap)
+│   ├── exporters/          doc_common.py (textos comunes), word.py, pdf.py
+│   └── assets/fonts/       Fuentes DejaVu incrustadas en el PDF
+├── packaging/
+│   ├── windows/            build_exe.ps1 + rpa-step-recorder.spec
+│   └── macos/              build_mac.sh + rpa-step-recorder-mac.spec
+└── releases/windows/       RPAStepRecorder.exe listo para usar
+```
 
 ## Historial de cambios
 

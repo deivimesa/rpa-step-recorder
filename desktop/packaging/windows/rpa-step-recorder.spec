@@ -5,8 +5,10 @@
 # Genera un único ejecutable Windows sin consola (windowed, --onefile):
 #     dist/RPAStepRecorder.exe
 #
-# Construir desde la carpeta `desktop/`:
-#     pyinstaller rpa-step-recorder.spec
+# Construir con el script (recomendado):
+#     desktop\packaging\windows\build_exe.ps1
+# o a mano, desde la carpeta `desktop/`:
+#     pyinstaller packaging/windows/rpa-step-recorder.spec
 #
 # Notas de empaquetado:
 #   - uiautomation y comtypes generan submódulos/código dinámico en tiempo de
@@ -17,12 +19,21 @@
 #   - fpdf2 ("fpdf") incluye datos propios -> collect_all('fpdf').
 # ---------------------------------------------------------------------------
 
+import os
+import sys
+
 from PyInstaller.utils.hooks import collect_all, collect_data_files, collect_submodules
 
+# --- Rutas -------------------------------------------------------------------
+# Este .spec vive en desktop/packaging/windows/. Las rutas se calculan desde
+# desktop/ para que el build no dependa de la carpeta desde la que se lance.
+DESKTOP = os.path.abspath(os.path.join(SPECPATH, '..', '..'))
+sys.path.insert(0, DESKTOP)  # collect_submodules('app') necesita importar el paquete
+
 # --- Icono opcional --------------------------------------------------------
-# No hay .ico en desktop/. Si existe uno generado (ver build_exe.ps1), se usa.
-import os
-_icon = 'RPAStepRecorder.ico' if os.path.exists('RPAStepRecorder.ico') else None
+# build_exe.ps1 genera build/RPAStepRecorder.ico a partir del PNG de la extensión.
+_ico = os.path.join(DESKTOP, 'build', 'RPAStepRecorder.ico')
+_icon = _ico if os.path.exists(_ico) else None
 
 # --- Recolección de dependencias dinámicas ---------------------------------
 datas = []
@@ -32,7 +43,7 @@ hiddenimports = []
 # Fuentes DejaVu (Unicode) usadas por el exportador PDF. Se incrustan como
 # datos para que el .exe las lleve consigo. En onefile se extraen a
 # sys._MEIPASS/app/assets/fonts, ruta que pdf._resolve_fonts_dir() comprueba.
-datas += [('app/assets/fonts/*.ttf', 'app/assets/fonts')]
+datas += [(os.path.join(DESKTOP, 'app', 'assets', 'fonts', '*.ttf'), 'app/assets/fonts')]
 
 # Paquetes con submódulos/datos dinámicos: traer todo para evitar sorpresas.
 for _pkg in ('uiautomation', 'comtypes', 'pynput', 'mss', 'fpdf'):
@@ -53,15 +64,16 @@ hiddenimports += [
     'pynput.keyboard._win32',
     'pynput.mouse._win32',
     'app.backends.windows',
-    'app.backends.win_uia',
-    'app.backends.win_hooks',
-    'app.backends.win_system',
+    'app.backends.windows.backend',
+    'app.backends.windows.uia',
+    'app.backends.windows.hooks',
+    'app.backends.windows.system',
 ]
 
 # psutil: extensión C, normalmente detectada; se asegura por si acaso.
 hiddenimports += ['psutil']
 
-# El paquete de la app vive en ./app
+# El paquete de la app vive en desktop/app
 hiddenimports += collect_submodules('app')
 
 
@@ -69,8 +81,8 @@ block_cipher = None
 
 
 a = Analysis(
-    ['run.py'],
-    pathex=['.'],
+    [os.path.join(DESKTOP, 'run.py')],
+    pathex=[DESKTOP],
     binaries=binaries,
     datas=datas,
     hiddenimports=hiddenimports,

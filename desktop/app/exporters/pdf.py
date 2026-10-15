@@ -16,8 +16,8 @@ from pathlib import Path
 from fpdf import FPDF
 from PIL import Image
 
-from .. import doc_common as dc
-from .. import storage
+from . import doc_common as dc
+from ..core import storage
 
 
 # ── Localización robusta de la carpeta de fuentes ───────────

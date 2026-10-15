@@ -32,7 +32,8 @@ from pathlib import Path
 
 from PIL import Image
 
-from . import __version__, paths
+from .. import __version__
+from . import paths
 
 log = logging.getLogger("rpa.storage")
 

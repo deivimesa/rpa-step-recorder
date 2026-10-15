@@ -609,7 +609,7 @@
 
     const styles = document.createElement("link");
     styles.rel = "stylesheet";
-    styles.href = chrome.runtime.getURL("overlay.css");
+    styles.href = chrome.runtime.getURL("src/content/overlay.css");
 
     card = document.createElement("div");
     card.className = "card";

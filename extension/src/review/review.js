@@ -4,10 +4,10 @@
  * worker) porque una página sí puede crear object URLs y no se cierra sola.
  */
 
-import * as db from "./lib/db.js";
-import { buildDocx } from "./lib/docx.js";
-import { buildPdf } from "./lib/pdf.js";
-import { controlLabel, prettyDate, slugify } from "./lib/doc-common.js";
+import * as db from "../lib/db.js";
+import { buildDocx } from "../lib/docx.js";
+import { buildPdf } from "../lib/pdf.js";
+import { controlLabel, prettyDate, slugify } from "../lib/doc-common.js";
 
 const $ = (sel) => document.querySelector(sel);
 const send = (message) => chrome.runtime.sendMessage(message);
@@ -259,7 +259,7 @@ $("#delete").addEventListener("click", () => {
 $("#confirm").addEventListener("close", async () => {
   if ($("#confirm").returnValue !== "ok") return;
   await send({ type: "DELETE_SESSION", sessionId: session.id });
-  location.href = chrome.runtime.getURL("review.html");
+  location.href = chrome.runtime.getURL("src/review/review.html");
 });
 
 $("#edit-cover").addEventListener("click", () => $("#cover").showModal());

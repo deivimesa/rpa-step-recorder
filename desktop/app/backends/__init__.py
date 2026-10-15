@@ -19,11 +19,11 @@ def get_backend() -> Backend:
         return _backend
     try:
         if sys.platform == "win32":
-            from .windows import WindowsBackend
+            from .windows.backend import WindowsBackend
 
             _backend = WindowsBackend()
         elif sys.platform == "darwin":
-            from .macos import MacBackend
+            from .macos.backend import MacBackend
 
             _backend = MacBackend()
     except Exception:

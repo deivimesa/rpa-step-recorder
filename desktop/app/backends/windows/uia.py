@@ -30,8 +30,8 @@ import time
 
 import uiautomation as auto
 
-from .. import paths
-from .base import compute_reliability, secret_hint
+from ...core import paths
+from ..base import compute_reliability, secret_hint
 
 log = logging.getLogger("rpa.uia")
 

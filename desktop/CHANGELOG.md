@@ -22,6 +22,15 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es/1.0.0/).
   entrada segura activa (macOS).
 - Empaquetado para macOS: `build_mac.sh` / `rpa-step-recorder-mac.spec`.
 
+### Cambiado
+- Código organizado por carpetas: `app/core/` (grabación y datos), `app/ui/`
+  (ventanas), `app/backends/windows/` y `app/backends/macos/`, y
+  `app/exporters/`. `app/main.py` queda solo como arranque.
+- Empaquetado por sistema en `packaging/windows/` y `packaging/macos/`; los
+  scripts se pueden lanzar desde cualquier carpeta.
+- El ejecutable de Windows listo para usar se versiona en `releases/windows/`
+  (`build_exe.ps1` lo copia ahí al terminar).
+
 ### Corregido
 - Al detener se perdía lo último escrito y las ediciones pendientes.
 - Se perdían los espacios al escribir; Tab mezclaba dos campos en un paso.

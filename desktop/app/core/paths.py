@@ -90,12 +90,12 @@ def resource_path(*parts: str) -> Path:
     junto al paquete ``app``. Se prueban ambas para que funcione igual en el
     código fuente, en el .exe de Windows y en la .app de macOS.
     """
-    here = Path(__file__).resolve().parent
+    package_dir = Path(__file__).resolve().parents[1]  # carpeta del paquete app
     candidates = []
     meipass = getattr(sys, "_MEIPASS", "")
     if meipass:
         candidates.append(Path(meipass) / "app" / Path(*parts))
-    candidates.append(here / Path(*parts))
+    candidates.append(package_dir / Path(*parts))
     for candidate in candidates:
         if candidate.exists():
             return candidate

@@ -18,12 +18,12 @@ from tkinter import messagebox, ttk
 
 from PIL import Image, ImageTk
 
-from . import doc_common as dc
-from . import storage
-from .backends import get_backend
-from . import ui_theme as ut
+from ..exporters import doc_common as dc
+from ..core import storage
+from ..backends import get_backend
+from . import theme as ut
 
-# ── Paleta y tokens (centralizados en ui_theme) ─────────────
+# ── Paleta y tokens (centralizados en theme.py) ─────────────
 ACCENT = ut.ACCENT   # rojo de acento
 INK = ut.INK         # tinta (texto principal)
 MUTED = ut.MUTED     # texto tenue

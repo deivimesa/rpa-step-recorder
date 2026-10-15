@@ -24,8 +24,8 @@ import time
 
 import Quartz
 
-from ..keys import KeyEvent, MouseEvent
-from .base import HookError
+from ...core.keys import KeyEvent, MouseEvent
+from ..base import HookError
 
 log = logging.getLogger("rpa.tap")
 
