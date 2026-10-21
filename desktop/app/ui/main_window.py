@@ -23,7 +23,6 @@ from .. import APP_NAME, __version__
 from ..exporters import doc_common as dc
 from ..core import logsetup, storage
 from . import theme as ut
-from ..backends import get_backend
 from ..core.settings import Settings
 from ..core.recorder import Recorder
 from .review import ReviewWindow
@@ -49,6 +48,9 @@ def _format_size(num_bytes: int) -> str:
 
 
 class App(tk.Tk):
+    # Texto de la lista en vivo antes del primer paso (el híbrido web lo cambia).
+    live_empty_text = "Haz clic en cualquier app para registrar el primer paso."
+
     def __init__(self):
         super().__init__()
         # Ya hay raíz Tk: resolvemos la monoespaciada preferida (Cascadia/Consolas).
@@ -80,8 +82,8 @@ class App(tk.Tk):
         self._calls: queue.Queue = queue.Queue()
         self._refresh_pending = False
         self.settings = Settings()
-        self.backend = get_backend()
-        self.recorder = Recorder(on_change=self._on_change, on_hotkey=self._on_hotkey, settings=self.settings)
+        self.recorder = self._make_recorder()
+        self.backend = self.recorder.backend
         logsetup.set_fatal_callback(lambda msg: self._post(lambda: self._fatal(msg)))
         self.report_callback_exception = self._tk_exception
         self.protocol("WM_DELETE_WINDOW", self._on_close)
@@ -91,6 +93,10 @@ class App(tk.Tk):
         self._refresh()
         self._pump()
         self._health()
+
+    def _make_recorder(self) -> Recorder:
+        """Grabador de la ventana; el híbrido web lo sustituye por el del navegador."""
+        return Recorder(on_change=self._on_change, on_hotkey=self._on_hotkey, settings=self.settings)
 
     # ── estilo ──────────────────────────────────────────────
 
@@ -613,7 +619,7 @@ class App(tk.Tk):
 
         if not steps:
             ttk.Label(
-                self._live_inner, text="Haz clic en cualquier app para registrar el primer paso.",
+                self._live_inner, text=self.live_empty_text,
                 style="Muted.TLabel", padding=8,
             ).pack(anchor="w")
             return

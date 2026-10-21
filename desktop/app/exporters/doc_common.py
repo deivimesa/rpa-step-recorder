@@ -133,6 +133,8 @@ def cover_rows(session: dict) -> list[list[str]]:
         ["Fecha de grabación", pretty_date(session.get("started_at", "")) or "—"],
         ["Total de pasos", str(len(steps))],
     ]
+    if session.get("start_url"):
+        rows.append(["URL de inicio", session["start_url"]])
     span = duration(session)
     if span:
         rows.append(["Duración de la grabación", span])
@@ -169,6 +171,12 @@ def metadata_rows(step: dict) -> list[list[str]]:
         label = "Opción elegida" if step.get("kind") == "select" else "Valor escrito"
         rows.append([label, step["value"]])
 
+    if element and element.get("platform") == "web":
+        rows.extend(_web_element_rows(element))
+        rows.extend(coordinate_rows(step))
+        rows.append(["Registrado", pretty_date(step.get("timestamp", ""))])
+        return rows
+
     if element:
         mac = element.get("platform") == "macos"
         if element.get("automation_id"):
@@ -203,6 +211,36 @@ def metadata_rows(step: dict) -> list[list[str]]:
     return rows
 
 
+def _web_element_rows(element: dict) -> list[list[str]]:
+    """Identificación y ubicación de un elemento de una página web (DOM)."""
+    rows: list[list[str]] = []
+    tag = element.get("tag") or ""
+    if tag:
+        kind = element.get("input_type") or ""
+        rows.append(["Etiqueta HTML", f'<{tag} type="{kind}">' if kind else f"<{tag}>"])
+    if element.get("role"):
+        rows.append(["Rol ARIA", element["role"]])
+    if element.get("dom_id"):
+        rows.append(["id", element["dom_id"]])
+    if element.get("dom_name"):
+        rows.append(["Atributo name", element["dom_name"]])
+    if element.get("test_id"):
+        rows.append(["Atributo de prueba", f'{element.get("test_attr") or "data-testid"}="{element["test_id"]}"'])
+    if element.get("href"):
+        rows.append(["Enlace (href)", element["href"]])
+    if element.get("url"):
+        rows.append(["URL", element["url"]])
+    if element.get("page_title"):
+        rows.append(["Página", element["page_title"]])
+    if element.get("frame_url"):
+        rows.append(["Marco (iframe)", element["frame_url"]])
+    if element.get("frame_path"):
+        rows.append(["Selector del iframe", " → ".join(element["frame_path"])])
+    if element.get("app"):
+        rows.append(["Navegador", element["app"]])
+    return rows
+
+
 def coordinate_rows(step: dict) -> list[list[str]]:
     """Coordenadas del clic para reproducirlo si el selector falla.
 
@@ -215,6 +253,10 @@ def coordinate_rows(step: dict) -> list[list[str]]:
     click = coords.get("click_desktop")
     if click:
         rows.append(["Clic (pantalla)", f"x={click.get('x')}, y={click.get('y')}"])
+
+    page = coords.get("click_viewport")
+    if page:
+        rows.append(["Clic en la página", f"x={page.get('x')}, y={page.get('y')} (px CSS del área visible)"])
 
     el = coords.get("element")
     if el:
@@ -232,6 +274,10 @@ def coordinate_rows(step: dict) -> list[list[str]]:
     mon = coords.get("monitor")
     if mon and mon.get("index") is not None:
         rows.append(["Monitor", f"#{mon['index']} ({mon.get('width')}×{mon.get('height')})"])
+
+    view = coords.get("viewport")
+    if view and view.get("width"):
+        rows.append(["Área visible", f"{view['width']}×{view.get('height')} px CSS"])
 
     return rows
 
@@ -310,6 +356,12 @@ _IDENTIFICATION_KEYS = {
     "AXIdentifier",
     "Rol AX",
     "Ruta del control",
+    "Etiqueta HTML",
+    "Rol ARIA",
+    "id",
+    "Atributo name",
+    "Atributo de prueba",
+    "Enlace (href)",
 }
 
 
@@ -327,9 +379,15 @@ def location_rows(step: dict) -> list[list[str]]:
 
 
 def selector_rows(step: dict) -> list[list[str]]:
-    """Selectores listos para herramientas RPA (UIA, pywinauto, UiPath)."""
+    """Selectores listos para herramientas RPA (UIA, pywinauto, UiPath, web)."""
     sel = step.get("selectors") or {}
     rows: list[list[str]] = []
+    if sel.get("css"):
+        rows.append(["Selector CSS", sel["css"]])
+    if sel.get("xpath"):
+        rows.append(["XPath", sel["xpath"]])
+    if sel.get("xpath_text"):
+        rows.append(["XPath por texto", sel["xpath_text"]])
     if sel.get("uia_xpath"):
         rows.append(["Selector UIA (XPath)", sel["uia_xpath"]])
     pyw = sel.get("pywinauto")
@@ -345,6 +403,10 @@ def selector_rows(step: dict) -> list[list[str]]:
     crit = sel.get("ax_criteria")
     if crit:
         rows.append(["Criterios AX", ", ".join(f"{k}={v!r}" for k, v in crit.items())])
+    if sel.get("playwright"):
+        rows.append(["Playwright", sel["playwright"]])
+    if sel.get("selenium"):
+        rows.append(["Selenium", sel["selenium"]])
     return rows
 
 

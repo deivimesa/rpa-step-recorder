@@ -226,7 +226,8 @@ class ReviewWindow(tk.Toplevel):
                 justify="left", wraplength=460,
             ).pack(side="left", fill="x", expand=True)
 
-        xpath = (step.get("selectors") or {}).get("uia_xpath", "")
+        sel = step.get("selectors") or {}
+        xpath = sel.get("uia_xpath") or sel.get("xpath") or ""
         if xpath:
             ttk.Button(box, text="Copiar XPath", command=lambda x=xpath: self._copy(x)).pack(
                 anchor="e", pady=(ut.SPACE_2, 0)

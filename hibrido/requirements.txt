@@ -1,0 +1,6 @@
+# RPA Step Recorder - versión HÍBRIDA (web + escritorio, Windows)
+# Todo lo de la app de escritorio (su código se reutiliza desde ../desktop)
+-r ../desktop/requirements.txt
+
+# Grabación web: conexión con el navegador por el protocolo CDP
+websocket-client==1.8.0

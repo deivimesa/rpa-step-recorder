@@ -67,6 +67,7 @@ STEP_KIND_ES = {
     "right_click": "Clic derecho",
     "double_click": "Doble clic",
     "input": "Escritura",
+    "select": "Selección",
     "key": "Tecla",
     "shortcut": "Atajo",
     "note": "Nota",

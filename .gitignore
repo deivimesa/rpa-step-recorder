@@ -30,6 +30,8 @@ htmlcov/
 
 desktop/build/
 desktop/dist/
+hibrido/build/
+hibrido/dist/
 *.manifest
 
 # OJO: el .spec SÍ se versiona (es la receta reproducible del build).

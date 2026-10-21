@@ -365,6 +365,18 @@ class Recorder:
             coords["monitor"] = mon
         return coords
 
+    def _grab(self, pos, rect):
+        """Captura y anota la pantalla del paso: (completa, detalle, monitor).
+
+        El grabador web del híbrido la sustituye por la captura de la página.
+        """
+        image, local_rect, monitor_info = capture.grab_for_point(pos[0], pos[1], rect)
+        limit = int(self._setting("capture_max_width", 2560) or 0)
+        full, zoom = annotate.annotate(image, local_rect)
+        if limit and full.width > limit:
+            full = full.resize((limit, round(full.height * limit / full.width)))
+        return full, zoom, monitor_info
+
     def _record(self, kind, element, suggestion, value="", secret=False, point=None, step_id=None) -> str | None:
         with self._lock:
             session = self._session
@@ -382,11 +394,7 @@ class Recorder:
         full = zoom = None
         monitor_info = None
         try:
-            image, local_rect, monitor_info = capture.grab_for_point(pos[0], pos[1], rect)
-            limit = int(self._setting("capture_max_width", 2560) or 0)
-            full, zoom = annotate.annotate(image, local_rect)
-            if limit and full.width > limit:
-                full = full.resize((limit, round(full.height * limit / full.width)))
+            full, zoom, monitor_info = self._grab(pos, rect)
         except Exception:
             log.exception("fallo en captura/anotación; el paso se guarda sin imagen")
 
