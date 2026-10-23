@@ -86,7 +86,8 @@ class WebRecorder(Recorder):
 
     def _process_web(self, event: dict) -> None:
         data = event["data"]
-        page = self.backend.current_page()
+        # La pestaña del evento, no la última tocada: el usuario pudo cambiar de pestaña.
+        page = self.backend.page_info(event.get("page"))
         element = elements.build_element(data, self.backend.browser_name, page.get("url", ""), page.get("title", ""))
         if data.get("kind") == "dblclick":
             last = self._last_web_click
@@ -114,7 +115,7 @@ class WebRecorder(Recorder):
         image = self.backend.shot_image(future)
         viewport = shot.get("viewport") or {}
         width = float(viewport.get("width") or 0)
-        # Captura en píxeles físicos; el agente mide en píxeles CSS (zoom y escala de Windows).
+        # Captura en píxeles físicos; el agente mide en píxeles CSS (zoom, escala de Windows o pantalla Retina).
         scale = image.width / width if width else 1.0
         local = None
         if rect:

@@ -1,8 +1,8 @@
 """Pantalla inicial del híbrido: elegir entre grabar en la web o en el escritorio.
 
 Web pide la URL y abre el navegador predeterminado; Escritorio abre el
-grabador de siempre (UI Automation). La elección y la última URL se recuerdan
-en settings.json.
+grabador de siempre (UI Automation en Windows, Accesibilidad en macOS). La
+elección y la última URL se recuerdan en settings.json.
 """
 
 from __future__ import annotations
@@ -11,6 +11,7 @@ import tkinter as tk
 from tkinter import messagebox, ttk
 
 from app import APP_NAME
+from app.core.paths import IS_MAC
 from app.core.settings import Settings
 from app.ui import theme as ut
 
@@ -20,12 +21,23 @@ from ..web import browser as web_browser
 WEB = "web"
 DESKTOP = "desktop"
 
+WEB_TEXT = ("Aplicaciones en el navegador: portales, SaaS, intranet. "
+            "Captura selector CSS, XPath, id y URL de cada elemento.")
+if IS_MAC:
+    WEB_TEXT += " No necesita permisos de macOS."
+    DESKTOP_TEXT = ("Cualquier app de macOS: ERP, utilidades, apps nativas. Usa la Accesibilidad "
+                    "(rol AX, AXIdentifier, AppleScript) y necesita permisos de macOS.")
+else:
+    DESKTOP_TEXT = ("Cualquier programa de Windows: ERP, SAP GUI, apps nativas. "
+                    "Usa UI Automation (AutomationId, selectores UiPath / pywinauto).")
+
 
 def fit_geometry(win: tk.Misc, width: int, height: int) -> None:
     """Tamaño pensado a 100 % de escala, ajustado al DPI real y a la pantalla.
 
     Con la escala de Windows al 150 % las fuentes crecen pero las medidas en
-    píxeles no: sin esto la ventana se queda corta y corta el contenido.
+    píxeles no: sin esto la ventana se queda corta y corta el contenido. En
+    macOS Tk ya trabaja en puntos y el factor queda en 1.
     """
     factor = max(1.0, float(win.tk.call("tk", "scaling")) / (96 / 72))
     w = min(round(width * factor), win.winfo_screenwidth() - 40)
@@ -97,11 +109,7 @@ class ModeChooser(tk.Tk):
         body.pack(fill="both", expand=True)
 
         self._cards = {}
-        self._cards[WEB] = self._card(
-            body, WEB, "Web",
-            "Aplicaciones en el navegador: portales, SaaS, intranet. "
-            "Captura selector CSS, XPath, id y URL de cada elemento.",
-        )
+        self._cards[WEB] = self._card(body, WEB, "Web", WEB_TEXT)
         # La URL va dentro de la opción Web: solo se pide si se elige.
         self._url_box = ttk.Frame(self._cards[WEB]["frame"], style="Card.TFrame")
         tk.Label(self._url_box, text="URL de inicio", bg=ut.CARD, fg=ut.INK,
@@ -114,11 +122,7 @@ class ModeChooser(tk.Tk):
         self._browser_note.pack(fill="x")
         wrap_to_width(self._browser_note)
 
-        self._cards[DESKTOP] = self._card(
-            body, DESKTOP, "Escritorio",
-            "Cualquier programa de Windows: ERP, SAP GUI, apps nativas. "
-            "Usa UI Automation (AutomationId, selectores UiPath / pywinauto).",
-        )
+        self._cards[DESKTOP] = self._card(body, DESKTOP, "Escritorio", DESKTOP_TEXT)
 
         self._go = ttk.Button(self, text="Continuar", style="Accent.TButton", command=self._continue)
         self._go.pack(fill="x", padx=ut.SPACE_5, pady=(0, ut.SPACE_5))
@@ -147,7 +151,9 @@ class ModeChooser(tk.Tk):
     def _sync(self):
         mode = self._mode.get()
         for key, card in self._cards.items():
-            card["frame"].config(highlightbackground=ut.BRAND if key == mode else ut.BORDER)
+            # Mismo color con y sin foco: si no, macOS pinta de negro la tarjeta con el foco.
+            color = ut.BRAND if key == mode else ut.BORDER
+            card["frame"].config(highlightbackground=color, highlightcolor=color)
         if mode == WEB:
             self._url_box.pack(fill="x", pady=(ut.SPACE_3, 0))
             if self._browser is None:

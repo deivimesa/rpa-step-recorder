@@ -1,4 +1,4 @@
-# RPA Step Recorder - versión HÍBRIDA (web + escritorio, Windows)
+# RPA Step Recorder - versión HÍBRIDA (web + escritorio, Windows y macOS)
 # Todo lo de la app de escritorio (su código se reutiliza desde ../desktop)
 -r ../desktop/requirements.txt
 

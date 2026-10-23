@@ -3,7 +3,12 @@
 La grabación web controla el navegador por el protocolo de depuración (CDP),
 que solo hablan los navegadores basados en Chromium. Si el predeterminado es
 uno de ellos (Chrome, Edge, Brave, Vivaldi...) se usa ese; si no (Firefox,
-Opera...), se recurre a Edge, que viene con Windows, o a Chrome.
+Safari, Opera...), se recurre al primero compatible que esté instalado: Edge
+o Chrome en Windows, Chrome, Edge o Brave en macOS.
+
+Cómo se averigua el predeterminado y dónde está instalado cada navegador
+depende del sistema y vive en ``windows.py`` y ``macos.py``; aquí queda lo
+común: el catálogo de navegadores compatibles, la elección y el arranque.
 
 El navegador se abre con un perfil propio de la grabación: desde Chrome 136 la
 depuración remota no se permite sobre el perfil habitual, y así tampoco se
@@ -13,10 +18,9 @@ de modo que los inicios de sesión hechos allí se recuerdan la próxima vez.
 
 from __future__ import annotations
 
+import functools
 import json
 import logging
-import os
-import re
 import subprocess
 import sys
 import time
@@ -28,20 +32,16 @@ from app.core import paths
 
 log = logging.getLogger("rpa.browser")
 
-# Ejecutable -> (clave del perfil, nombre visible). Todos hablan CDP.
+# Clave -> (nombre visible, ejecutable en Windows). Todos hablan CDP. El
+# ejecutable de Windows también se usa en los selectores UiPath, que se
+# ejecutan en Windows aunque la grabación se haga en un Mac.
 CHROMIUM = {
-    "chrome.exe": ("chrome", "Google Chrome"),
-    "msedge.exe": ("edge", "Microsoft Edge"),
-    "brave.exe": ("brave", "Brave"),
-    "vivaldi.exe": ("vivaldi", "Vivaldi"),
-    "chromium.exe": ("chromium", "Chromium"),
+    "chrome": ("Google Chrome", "chrome.exe"),
+    "edge": ("Microsoft Edge", "msedge.exe"),
+    "brave": ("Brave", "brave.exe"),
+    "vivaldi": ("Vivaldi", "vivaldi.exe"),
+    "chromium": ("Chromium", "chromium.exe"),
 }
-
-_FALLBACKS = (
-    ("msedge.exe", (r"%ProgramFiles(x86)%\Microsoft\Edge\Application", r"%ProgramFiles%\Microsoft\Edge\Application")),
-    ("chrome.exe", (r"%ProgramFiles%\Google\Chrome\Application", r"%ProgramFiles(x86)%\Google\Chrome\Application",
-                    r"%LOCALAPPDATA%\Google\Chrome\Application")),
-)
 
 
 class BrowserError(Exception):
@@ -51,89 +51,66 @@ class BrowserError(Exception):
 @dataclass
 class BrowserInfo:
     exe: str          # ruta completa del ejecutable
-    process: str      # nombre del ejecutable (chrome.exe), para los selectores UiPath
+    process: str      # ejecutable en Windows (chrome.exe), para los selectores UiPath
     key: str          # nombre corto para la carpeta del perfil
     name: str         # nombre visible ("Google Chrome")
     is_default: bool  # es el navegador predeterminado del usuario
     note: str = ""    # por qué no se usa el predeterminado, si aplica
 
 
+@dataclass
+class DefaultBrowser:
+    """Lo que cada sistema sabe del navegador predeterminado."""
+
+    exe: str = ""     # ejecutable, si se pudo averiguar
+    key: str = ""     # clave de CHROMIUM si es compatible; "" si no
+    label: str = ""   # nombre para los avisos ("Firefox", "Safari")
+
+
 # ── detección ───────────────────────────────────────────────
 
 
-def _default_command() -> tuple[str, str]:
-    """(ProgId, comando de apertura) del navegador predeterminado para https."""
-    import winreg
+def _platform():
+    """Módulo de detección del sistema actual."""
+    if sys.platform == "win32":
+        from . import windows
 
-    base = r"Software\Microsoft\Windows\Shell\Associations\UrlAssociations\https"
-    prog_id = ""
-    # Windows 11 reciente guarda la elección en UserChoiceLatest; antes, en UserChoice.
-    for sub in (r"\UserChoiceLatest\ProgId", r"\UserChoiceLatest", r"\UserChoice"):
-        try:
-            with winreg.OpenKey(winreg.HKEY_CURRENT_USER, base + sub) as key:
-                prog_id = winreg.QueryValueEx(key, "ProgId")[0]
-                if prog_id:
-                    break
-        except OSError:
-            continue
-    if not prog_id:
-        return "", ""
-    try:
-        with winreg.OpenKey(winreg.HKEY_CLASSES_ROOT, prog_id + r"\shell\open\command") as key:
-            return prog_id, winreg.QueryValueEx(key, "")[0]
-    except OSError:
-        return prog_id, ""
+        return windows
+    if sys.platform == "darwin":
+        from . import macos
+
+        return macos
+    raise BrowserError("La grabación web del híbrido solo está disponible en Windows y macOS.")
 
 
-def _exe_from_command(command: str) -> str:
-    command = os.path.expandvars(command.strip())
-    if command.startswith('"'):
-        return command[1:].split('"', 1)[0]
-    match = re.match(r"(.+?\.exe)\b", command, re.IGNORECASE)
-    return match.group(1) if match else ""
+def _info(key: str, exe: str, is_default: bool, note: str = "") -> BrowserInfo:
+    name, process = CHROMIUM[key]
+    return BrowserInfo(exe, process, key, name, is_default, note)
 
 
-def _friendly_name(exe: str, prog_id: str) -> str:
-    stem = Path(exe).stem.lower() if exe else ""
-    if "firefox" in stem or prog_id.lower().startswith("firefox"):
-        return "Firefox"
-    if "opera" in stem or prog_id.lower().startswith("opera") or stem == "launcher":
-        return "Opera"
-    return Path(exe).stem.capitalize() if exe else (prog_id or "desconocido")
-
-
-def _fallback(note: str) -> BrowserInfo | None:
-    for process, folders in _FALLBACKS:
-        for folder in folders:
-            exe = Path(os.path.expandvars(folder)) / process
-            if exe.exists():
-                key, name = CHROMIUM[process]
-                return BrowserInfo(str(exe), process, key, name, False, note)
-    return None
-
-
+@functools.lru_cache(maxsize=1)
 def pick() -> BrowserInfo:
-    """El navegador con el que se graba: el predeterminado si es compatible."""
-    if sys.platform != "win32":
-        raise BrowserError("La grabación web del híbrido solo está disponible en Windows.")
-    prog_id, command = _default_command()
-    exe = _exe_from_command(command) if command else ""
-    process = Path(exe).name.lower() if exe else ""
-    if process in CHROMIUM and Path(exe).exists():
-        key, name = CHROMIUM[process]
-        return BrowserInfo(exe, process, key, name, True)
-    current = _friendly_name(exe, prog_id)
-    note = (f"Tu navegador predeterminado ({current}) no admite la grabación web; "
-            "se usa {name}.") if exe or prog_id else "No se encontró el navegador predeterminado; se usa {name}."
-    info = _fallback(note)
-    if info is None:
-        raise BrowserError(
-            "Se necesita Google Chrome o Microsoft Edge para grabar procesos web, "
-            "y no se encontró ninguno en este equipo."
-        )
-    info.note = info.note.format(name=info.name)
-    log.info("navegador predeterminado no compatible (%s); se usa %s", prog_id or exe, info.name)
-    return info
+    """El navegador con el que se graba: el predeterminado si es compatible.
+
+    Se calcula una sola vez por ejecución: la pantalla de elección y el panel
+    web lo consultan, y en Windows supone leer el registro.
+    """
+    system = _platform()
+    default = system.default_browser()
+    if default.key in CHROMIUM and default.exe and Path(default.exe).exists():
+        return _info(default.key, default.exe, True)
+    if default.label:
+        note = f"Tu navegador predeterminado ({default.label}) no admite la grabación web; se usa {{name}}."
+    else:
+        note = "No se encontró el navegador predeterminado; se usa {name}."
+    for key in system.FALLBACK_ORDER:
+        exe = system.installed(key)
+        if exe:
+            name = CHROMIUM[key][0]
+            log.info("navegador predeterminado no compatible (%s); se usa %s", default.label or "?", name)
+            return _info(key, exe, False, note.format(name=name))
+    names = " o ".join(CHROMIUM[key][0] for key in system.FALLBACK_ORDER[:2])
+    raise BrowserError(f"Se necesita {names} para grabar procesos web, y no se encontró ninguno en este equipo.")
 
 
 # ── arranque ────────────────────────────────────────────────
@@ -188,7 +165,13 @@ def launch(info: BrowserInfo, url: str, timeout: float = 25.0) -> str:
     ]
     log.info("abriendo %s con perfil de grabación", info.name)
     try:
-        process = subprocess.Popen(args, close_fds=True)
+        # Salida descartada: la app empaquetada no tiene consola. En macOS, una
+        # sesión propia evita que el navegador se cierre con la terminal que
+        # lanzó la app.
+        process = subprocess.Popen(
+            args, close_fds=True, stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL, start_new_session=sys.platform != "win32",
+        )
     except OSError as err:
         raise BrowserError(f"No se pudo abrir {info.name}: {err}") from err
     deadline = time.monotonic() + timeout

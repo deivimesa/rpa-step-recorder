@@ -25,13 +25,14 @@ htmlcov/
 .eggs/
 
 # --- PyInstaller / empaquetado --------------------------------------------
-# Salidas del build: no se versionan. El ejecutable de Windows listo para usar
-# se versiona aparte en desktop/releases/windows/ (lo copia build_exe.ps1).
+# Salidas del build: no se versionan. Los ejecutables de Windows listos para
+# usar se versionan aparte en desktop/releases/windows/ y hybrid/releases/windows/
+# (los copia build_exe.ps1).
 
 desktop/build/
 desktop/dist/
-hibrido/build/
-hibrido/dist/
+hybrid/build/
+hybrid/dist/
 *.manifest
 
 # OJO: el .spec SÍ se versiona (es la receta reproducible del build).
@@ -74,6 +75,7 @@ $RECYCLE.BIN/
 # NO ignorar recursos necesarios (se mantienen explícitamente versionados):
 #   extension/icons/*.png   -> iconos de la extensión
 #   desktop/**/*.py         -> código fuente
+#   hybrid/**/*.py          -> código fuente (y hybrid/hybrid/web/agent.js)
 #   *.spec                  -> receta de empaquetado
-#   desktop/releases/       -> ejecutables listos para usar
+#   */releases/             -> ejecutables listos para usar
 # ---------------------------------------------------------------------------

@@ -8,18 +8,17 @@ elemento.
 
 Todo ocurre **en tu equipo**: no envía nada a internet y funciona sin conexión.
 
-El proyecto tiene **dos versiones independientes**, pensadas para escenarios
-distintos:
+El proyecto tiene **tres versiones**, pensadas para escenarios distintos:
 
-| | 🧩 Extensión de navegador | 🖥️ App de escritorio |
-|---|---|---|
-| **Carpeta** | [`extension/`](extension/) | [`desktop/`](desktop/) |
-| **Dónde graba** | Páginas web en Chrome / Edge | Cualquier app de Windows o macOS (ERPs, SAP GUI, escritorio, utilidades...) |
-| **Plataforma** | Windows, macOS, Linux | Windows 10 / 11 y macOS 11+ |
-| **Instalación** | Cargar como extensión en modo desarrollador | Python + dependencias, o el `.exe` de [`desktop/releases/`](desktop/releases/) |
-| **Datos técnicos** | Selector CSS, XPath, id, URL | Windows: UI Automation (`AutomationId`, selectores UiPath / pywinauto). macOS: Accesibilidad (rol AX, AXIdentifier, ruta AX, AppleScript) |
-| **Requisitos** | Solo el navegador | Python 3.12 (o el ejecutable) |
-| **Salida** | Word y PDF | Word y PDF |
+| | 🧩 Extensión de navegador | 🖥️ App de escritorio | 🔀 Híbrido (web + escritorio) |
+|---|---|---|---|
+| **Carpeta** | [`extension/`](extension/) | [`desktop/`](desktop/) | [`hybrid/`](hybrid/) |
+| **Dónde graba** | Páginas web en Chrome / Edge | Cualquier app de Windows o macOS (ERPs, SAP GUI, escritorio, utilidades...) | Lo que elijas al abrirla: la web (en un navegador abierto por la app) o el escritorio |
+| **Plataforma** | Windows, macOS, Linux | Windows 10 / 11 y macOS 11+ | Windows 10 / 11 y macOS 11+ |
+| **Instalación** | Cargar como extensión en modo desarrollador | Python + dependencias, o el `.exe` de [`desktop/releases/`](desktop/releases/) | Python + dependencias, o el `.exe` de [`hybrid/releases/`](hybrid/releases/) |
+| **Datos técnicos** | Selector CSS, XPath, id, URL | Windows: UI Automation (`AutomationId`, selectores UiPath / pywinauto). macOS: Accesibilidad (rol AX, AXIdentifier, ruta AX, AppleScript) | Web: CSS, XPath, id, URL y selectores Playwright / Selenium / UiPath. Escritorio: los de la app de escritorio |
+| **Requisitos** | Solo el navegador | Python 3.12 (o el ejecutable) | Python 3.12 (o el ejecutable) y, para la web, Chrome, Edge o Brave |
+| **Salida** | Word y PDF | Word y PDF | Word y PDF |
 
 ## ¿Cuál me conviene?
 
@@ -31,6 +30,10 @@ distintos:
   Inspecciona el árbol de UI Automation (Windows) o de Accesibilidad (macOS),
   que es lo que necesitan los bots de RPA de escritorio (UiPath, Power
   Automate, pywinauto).
+- **Documentas procesos que mezclan web y escritorio**, o quieres una sola
+  app instalada para todo: usa el **híbrido**. Reutiliza la app de escritorio
+  y le añade un modo web que no necesita instalar la extensión (ni, en macOS,
+  dar permisos al sistema).
 
 ## Estructura del repositorio
 
@@ -68,6 +71,22 @@ rpa-step-recorder/
 │   ├── README.md              Instalación, uso y empaquetado
 │   └── CHANGELOG.md
 │
+├── hybrid/                    🔀 Híbrido web + escritorio (Windows y macOS); reutiliza desktop/app
+│   ├── run.py                 Punto de entrada: python run.py
+│   ├── requirements.txt       Las de desktop/ + websocket-client
+│   ├── hybrid/                Código fuente
+│   │   ├── main.py            Arranque: pantalla de elección ⇄ panel del modo elegido
+│   │   ├── ui/                Pantalla de elección y paneles web / escritorio
+│   │   └── web/               Grabación web por CDP: agente, navegador, grabador, selectores
+│   ├── tests/                 Pruebas (unittest)
+│   ├── packaging/             Empaquetado con PyInstaller
+│   │   ├── windows/           build_exe.ps1 + .spec → RPAStepRecorderHibrido.exe
+│   │   └── macos/             build_mac.sh + .spec → RPA Step Recorder Hibrido.app / .dmg
+│   ├── releases/windows/      RPAStepRecorderHibrido.exe listo para usar
+│   ├── README.md              Instalación, uso y empaquetado
+│   └── CHANGELOG.md
+│
+├── design/                    Design tokens de marca (CSS y JSON) de los que salen las paletas
 ├── README.md                  (este archivo)
 ├── LICENSE                    Licencia MIT
 └── .gitignore
@@ -77,11 +96,12 @@ rpa-step-recorder/
 
 - 🧩 **Extensión de navegador** → [`extension/README.md`](extension/README.md)
 - 🖥️ **App de escritorio (Windows y macOS)** → [`desktop/README.md`](desktop/README.md)
-- 📦 **Ejecutable de Windows** → [`desktop/releases/`](desktop/releases/)
+- 🔀 **Híbrido web + escritorio (Windows y macOS)** → [`hybrid/README.md`](hybrid/README.md)
+- 📦 **Ejecutables de Windows** → [`desktop/releases/`](desktop/releases/) y [`hybrid/releases/`](hybrid/releases/)
 
 ## Privacidad
 
-Ninguna de las dos versiones envía datos a servidores externos. Las capturas,
+Ninguna de las versiones envía datos a servidores externos. Las capturas,
 las grabaciones y los documentos se generan y se guardan solo en tu equipo.
 Las contraseñas nunca se registran: el paso correspondiente dice únicamente
 "Escribir la contraseña".

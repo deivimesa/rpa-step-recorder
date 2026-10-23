@@ -27,7 +27,7 @@ def run():
     lock = _single_instance()
     if lock is None:
         return
-    # Fija el DPI por monitor antes de crear ventanas (backend de Windows).
+    # Fija el DPI por monitor antes de crear ventanas (Windows; en macOS no hace nada).
     get_backend().prepare_process()
     log.info("híbrido %s", __version__)
 

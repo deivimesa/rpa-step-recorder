@@ -118,10 +118,13 @@ class WebBackend(Backend):
 
     def current_page(self) -> dict:
         """{"url", "title"} de la pestaña con la que se interactuó por última vez."""
+        return self.page_info(self._page_session())
+
+    def page_info(self, page_session: str | None) -> dict:
+        """{"url", "title"} de la pestaña enganchada con ``page_session``."""
         with self._lock:
-            session = self._page_session()
             for page in self._pages.values():
-                if page.get("session") == session:
+                if page_session and page.get("session") == page_session:
                     return {"url": page.get("url", ""), "title": page.get("title", "")}
         return {"url": "", "title": ""}
 
@@ -217,6 +220,13 @@ class WebBackend(Backend):
             with self._lock:
                 page = self._sessions.get(session_id or "", session_id)
                 self._last_page = page
+                # El marco superior manda URL y título actuales; Chrome los avisa
+                # tarde y los iframes no los conocen, así que se guardan aquí.
+                if data.get("url"):
+                    for info in self._pages.values():
+                        if info.get("session") == page:
+                            info["url"], info["title"] = data["url"], data.get("title") or info.get("title", "")
+                            break
             if self._listener:
                 self._listener(page, data, lambda: self.request_shot(page))
         elif method in ("Target.targetCreated", "Target.targetInfoChanged"):

@@ -4,15 +4,15 @@
     Construye el ejecutable HIBRIDO (web + escritorio) de RPA Step Recorder.
 
 .DESCRIPTION
-    - Usa el entorno virtual hibrido\.venv si existe (si no, el python del PATH).
-    - Instala las dependencias de hibrido\requirements.txt y PyInstaller.
+    - Usa el entorno virtual hybrid\.venv si existe (si no, el python del PATH).
+    - Instala las dependencias de hybrid\requirements.txt y PyInstaller.
     - Genera un icono .ico desde extension/icons/icon128.png.
-    - Ejecuta pyinstaller con packaging/rpa-step-recorder-hibrido.spec.
-    - Deja el binario en hibrido/dist/RPAStepRecorderHibrido.exe y lo copia a
-      hibrido/releases/RPAStepRecorderHibrido.exe (la copia versionada).
+    - Ejecuta pyinstaller con packaging/windows/rpa-step-recorder-hibrido.spec.
+    - Deja el binario en hybrid/dist/RPAStepRecorderHibrido.exe y lo copia a
+      hybrid/releases/windows/RPAStepRecorderHibrido.exe (la copia versionada).
 
-    Se puede ejecutar desde cualquier carpeta; por ejemplo, desde hibrido/:
-        .\packaging\build_exe.ps1
+    Se puede ejecutar desde cualquier carpeta; por ejemplo, desde hybrid/:
+        .\packaging\windows\build_exe.ps1
 #>
 
 $ErrorActionPreference = 'Stop'
@@ -26,7 +26,7 @@ function Invoke-Native([scriptblock]$Block) {
 }
 
 $ScriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
-$HibridoDir = (Resolve-Path (Join-Path $ScriptDir '..')).Path
+$HibridoDir = (Resolve-Path (Join-Path $ScriptDir '..\..')).Path
 Set-Location $HibridoDir
 
 Write-Host '==> RPA Step Recorder HIBRIDO - build del ejecutable' -ForegroundColor Cyan
@@ -60,19 +60,19 @@ print('ok')
 
 # 3. Build --------------------------------------------------------------------
 Write-Host '--> Ejecutando PyInstaller...' -ForegroundColor Cyan
-Invoke-Native { & $Python -m PyInstaller --noconfirm --log-level WARN --workpath build --distpath dist packaging\rpa-step-recorder-hibrido.spec }
+Invoke-Native { & $Python -m PyInstaller --noconfirm --log-level WARN --workpath build --distpath dist packaging\windows\rpa-step-recorder-hibrido.spec }
 if ($LASTEXITCODE -ne 0) { throw 'PyInstaller fallo.' }
 
 # 4. Resultado ----------------------------------------------------------------
 $Exe = Join-Path $HibridoDir 'dist\RPAStepRecorderHibrido.exe'
 if (Test-Path $Exe) {
     $sizeMB = [math]::Round((Get-Item $Exe).Length / 1MB, 1)
-    $ReleaseDir = Join-Path $HibridoDir 'releases'
+    $ReleaseDir = Join-Path $HibridoDir 'releases\windows'
     New-Item -ItemType Directory -Force -Path $ReleaseDir | Out-Null
     Copy-Item -Path $Exe -Destination (Join-Path $ReleaseDir 'RPAStepRecorderHibrido.exe') -Force
     Write-Host ''
     Write-Host "==> OK: $Exe ($sizeMB MB)" -ForegroundColor Green
-    Write-Host '    Copiado a releases\RPAStepRecorderHibrido.exe' -ForegroundColor Green
+    Write-Host '    Copiado a releases\windows\RPAStepRecorderHibrido.exe' -ForegroundColor Green
 } else {
     Write-Host '==> ERROR: no se genero el ejecutable.' -ForegroundColor Red
     exit 1

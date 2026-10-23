@@ -3,7 +3,7 @@
    que se inyecta en la página del usuario. Todos los pares texto/fondo están
    verificados a 4.5:1 o más (AA) en ambos temas.
 
-   La paleta se deriva de los design tokens de marca (design-tokens.css):
+   La paleta se deriva de los design tokens de marca (design/design-tokens.css):
    verde primario #008f57, amarillo #ffdc5e y verdes claros de apoyo. Los
    nombres semánticos (--accent, --accent-soft, ...) se mantienen para que el
    resto de hojas de estilo no cambie: aquí es donde la marca se "cablea".
@@ -14,7 +14,7 @@
 
 :root,
 :host {
-  /* --- Marca (espejo de design-tokens.css) --- */
+  /* --- Marca (espejo de design/design-tokens.css) --- */
   --brand-green-primary: #008f57;
   --brand-yellow-primary: #ffdc5e;
   --brand-green-light: #60ab58;

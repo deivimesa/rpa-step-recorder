@@ -89,7 +89,7 @@ LH_BODY, LH_BODY_LG, LH_SMALL, LH_CAPTION = 16, 18, 14, 13
 SPACE_1, SPACE_2, SPACE_3, SPACE_4, SPACE_5, SPACE_6, SPACE_8 = 4, 8, 12, 16, 20, 24, 32
 
 # ── Color (centralizado) ────────────────────────────────────
-# Paleta derivada de los design tokens de marca (design-tokens.css):
+# Paleta derivada de los design tokens de marca (design/design-tokens.css):
 # verde primario #008f57, amarillo #ffdc5e y verdes claros de apoyo.
 #
 # BRAND  → acciones primarias (Iniciar, Exportar): el verde de la marca.

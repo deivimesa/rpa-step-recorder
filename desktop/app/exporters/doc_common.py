@@ -10,7 +10,7 @@ import re
 import unicodedata
 from datetime import datetime
 
-# ── Paleta de marca (design-tokens.css) ────────────────────
+# ── Paleta de marca (design/design-tokens.css) ─────────────
 # Verde primario, amarillo, verdes claros de apoyo y blanco. Se explota toda
 # la paleta en el documento para que respire la marca, no solo el verde suelto.
 BRAND_GREEN = "008F57"        # verde primario

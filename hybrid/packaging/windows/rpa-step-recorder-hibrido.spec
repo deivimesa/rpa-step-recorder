@@ -3,16 +3,16 @@
 # Receta de empaquetado PyInstaller del RPA Step Recorder HÍBRIDO (web + escritorio).
 #
 # Genera un único ejecutable Windows sin consola (windowed, --onefile):
-#     hibrido/dist/RPAStepRecorderHibrido.exe
+#     hybrid/dist/RPAStepRecorderHibrido.exe
 #
 # Construir con el script (recomendado):
-#     hibrido\packaging\build_exe.ps1
-# o a mano, desde la carpeta `hibrido/`:
-#     pyinstaller packaging/rpa-step-recorder-hibrido.spec
+#     hybrid\packaging\windows\build_exe.ps1
+# o a mano, desde la carpeta `hybrid/`:
+#     pyinstaller packaging/windows/rpa-step-recorder-hibrido.spec
 #
 # Empaqueta dos paquetes:
 #   - app    (../desktop/app): grabador de escritorio, interfaz, documentos.
-#   - hybrid (hibrido/hybrid): pantalla de elección y grabación web por CDP.
+#   - hybrid (hybrid/hybrid):  pantalla de elección y grabación web por CDP.
 # El agente web (hybrid/web/agent.js) va como dato: se inyecta en el navegador.
 # ---------------------------------------------------------------------------
 
@@ -22,7 +22,8 @@ import sys
 from PyInstaller.utils.hooks import collect_all, collect_data_files, collect_submodules
 
 # --- Rutas -------------------------------------------------------------------
-HIBRIDO = os.path.abspath(os.path.join(SPECPATH, '..'))
+# Este .spec vive en hybrid/packaging/windows/: las rutas se calculan desde hybrid/.
+HIBRIDO = os.path.abspath(os.path.join(SPECPATH, '..', '..'))
 DESKTOP = os.path.abspath(os.path.join(HIBRIDO, '..', 'desktop'))
 sys.path[:0] = [HIBRIDO, DESKTOP]  # collect_submodules necesita importar ambos paquetes
 

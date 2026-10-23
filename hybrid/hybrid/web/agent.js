@@ -18,6 +18,7 @@
   const BINDING = "__rpaEmit";
   const FRAME_MSG = "__rpaHybrid";
   const IS_TOP = window.top === window;
+  const IS_MAC = /Mac/i.test(navigator.platform || navigator.userAgent || "");
 
   function emit(payload) {
     const bridge = window[BINDING];
@@ -442,20 +443,22 @@
     "mousedown",
     (event) => {
       if (event.button !== 0 && event.button !== 2) return;
+      // En macOS, Ctrl+clic es el clic derecho (abre el menú contextual).
+      const button = IS_MAC && event.button === 0 && event.ctrlKey ? 2 : event.button;
       const el = targetElement(event);
       if (watched && watched.el !== el) flushField("click");
       if (!el) return;
       // Segunda pulsación de un doble clic: la app convierte el paso anterior.
-      if (event.button === 0 && event.detail >= 2) {
+      if (button === 0 && event.detail >= 2) {
         send("dblclick", el);
         return;
       }
       // En un campo, lo interesante es lo que se escriba: se registra al salir.
-      if (event.button === 0 && isEditable(el)) {
+      if (button === 0 && isEditable(el)) {
         watch(el);
         return;
       }
-      send(event.button === 2 ? "right_click" : "click", el, null, { x: event.clientX, y: event.clientY });
+      send(button === 2 ? "right_click" : "click", el, null, { x: event.clientX, y: event.clientY });
     },
     true
   );
@@ -478,6 +481,16 @@
 
   const KEY_LABEL = { Enter: "Enter", Escape: "Esc" };
   const HOTKEYS = { F9: "toggle_record", F10: "toggle_pause", F8: "add_note" };
+  // Alternativa sin teclas F (en los portátiles Mac van con fn): Cmd+Mayús+8/9/0
+  // en macOS y Ctrl+Mayús+8/9/0 en Windows, como en la app de escritorio.
+  const HOTKEY_DIGITS = { Digit9: "toggle_record", Digit0: "toggle_pause", Digit8: "add_note" };
+
+  function hotkeyOf(event) {
+    if (!event.ctrlKey && !event.altKey && !event.metaKey && HOTKEYS[event.key]) return HOTKEYS[event.key];
+    const command = IS_MAC ? event.metaKey && !event.ctrlKey : event.ctrlKey && !event.metaKey;
+    if (command && event.shiftKey && !event.altKey) return HOTKEY_DIGITS[event.code] || "";
+    return "";
+  }
 
   /** Nombre del sitio donde se pulsó la tecla; vacío si el foco está en el documento. */
   function keyTarget(el) {
@@ -492,9 +505,10 @@
   document.addEventListener(
     "keydown",
     (event) => {
-      if (HOTKEYS[event.key] && !event.ctrlKey && !event.altKey && !event.metaKey) {
+      const hotkey = hotkeyOf(event);
+      if (hotkey) {
         event.preventDefault();
-        if (!event.repeat) emit({ kind: "hotkey", action: HOTKEYS[event.key] });
+        if (!event.repeat) emit({ kind: "hotkey", action: hotkey });
         return;
       }
       if (!KEY_LABEL[event.key] || event.repeat) return;
